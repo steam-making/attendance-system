@@ -3,8 +3,8 @@ services:
     name: attendance-web
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn making_site.wsgi:application"
+    startCommand: "gunicorn making_attendance.wsgi:application"
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: making_site.settings
+        value: making_attendance.settings
       - fromGroup: attendance-env
