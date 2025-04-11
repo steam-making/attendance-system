@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+<style>
+    tr.selected-row > td {
+        background-color:#f8f8f8 !important;
+    }
+</style>
+{% endblock %}
+{% block content %}
+{% load static %}
+{% load extra_filters %}
+<div class="container mt-4">
+
+   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        
+        <!-- ✅ 학교 선택 드롭다운 -->
+        <form method="get" class="d-flex align-items-center">
+            <select name="school" onchange="this.form.submit()" class="form-select me-2">
+                {% for school in schools %}
+                    <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
+                        {{ school.name }} {{school.program_name}}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- ✅ 오른쪽 버튼 그룹 -->
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <a href="{% url 'student_create' %}?school={{ selected_school.id }}" class="btn btn-success">학생 등록</a>
+            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="btn btn-warning">엑셀 업로드</a>
+            <button type="button" class="btn btn-danger" onclick="deleteSelectedStudents()">선택 삭제</button>
+        </div>
+
+    </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="container mt-5">
+        
+
+        {% for department, students in departments.items %}
+        <h4 class="mt-5">{{ department }} ({{ students|length }}명)</h4>
+        <table class="table text-center align-middle">
+            <thead class="{{ color_map_header|dict_get:department }}">
+                <tr>
+                    <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
+                    <th>부서</th>
+                    <th>학년</th>
+                    <th>반</th>
+                    <th>번호</th>
+                    <th>이름</th>
+                    <th>학부모연락처</th>
+                    <th>출석시간</th>
+                    <th>체크</th>
+                    <th>설정</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr onclick="toggleRowSelection(this)" >
+                    <td><input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}"></td>
+                    <td>{{ student.department}}</td>
+                    <td>{{ student.grade }}</td>
+                    <td>{{ student.classroom }}</td>
+                    <td>{{ student.number }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.phone }}</td>
+                    <td id="time-cell-{{ student.id }}">
+                        {% with attendances|dict_get:student.id as attendance %}
+                            {% if attendance %}
+                                {{ attendance.created_at|date:"H:i:s" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+
+                    <td id="attendance-cell-{{ student.id }}">
+                        {% if student.id in attendances %}
+                            <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
+                            <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다." class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
+                        {% else %}
+                            <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')" class="btn btn-success btn-sm">출석</button>
+                            <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')" class="btn btn-warning btn-sm">지각</button>
+                            <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')" class="btn btn-danger btn-sm">결석</button>
+                        {% endif %}
+
+                    </td>
+                    <td id="attendance-cell-{{ student.id }}">
+                        <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
+                        <!-- 이동 버튼: 드롭다운 + 자동 submit -->
+                        <form method="post" action="{% url 'move_student_department' student.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <select name="department" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                                <option disabled selected>이동</option>
+                                <option value="1부">1부</option>
+                                <option value="2부">2부</option>
+                                <option value="3부">3부</option>
+                            </select>
+                        </form>
+                        <form method="post" action="{% url 'delete_student' student.id %}" class="d-inline" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center">등록된 학생이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+    </div>
+
+    <script>
+
+    function toggleDepartment(dept, source) {
+        document.querySelectorAll(`.checkbox-${dept}`).forEach(cb => cb.checked = source.checked);
+    }
+    function checkAttendance(studentId, status, rowId) {
+        fetch(`/attendance/ajax/check/${studentId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: status })  // ✅ 상태값 전송
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("응답:", data);  // ✅ 디버깅용
+            if (data.status === 'success') {
+                const phone = data.phone;
+                const name = data.student;
+                const createdAt = data.created_at;  // ✅ 출석시간
+                const message = `${name}님 오늘 ${status} 처리되었습니다.`;
+                                
+                // ✅ UI 변경 (문자 링크 포함)
+                const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
+
+                // ✅ 버튼 영역 업데이트
+                document.getElementById(rowId).innerHTML = `
+                    <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
+                    <a href="${smsUrl}" class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
+                `;
+
+                // ✅ 출석시간도 함께 업데이트
+                const timeCell = document.getElementById(`time-cell-${studentId}`);
+                if (timeCell) {
+                    timeCell.innerText = createdAt;
+                }
+                } else if (data.status === 'already_checked') {
+                    alert("이미 출석 처리되었습니다.");
+                }
+        });
+    }
+
+    function cancelAttendance(studentId, rowId) {
+        fetch(`/attendance/ajax/cancel/${studentId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'canceled') {
+                document.getElementById(rowId).innerHTML = `
+                    <button onclick="checkAttendance(${studentId}, '${rowId}')" class="btn btn-primary btn-sm">출석</button>
+                `;
+
+                // ✅ 새로고침으로 화면 즉시 반영
+                window.location.reload();
+            }
+        });
+    }
+
+    // CSRF 토큰을 fetch 요청에 넣기 위함
+    const csrfToken = '{{ csrf_token }}';
+
+    function toggleAll(source) {
+        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = source.checked);
+    }
+
+    function deleteSelectedStudents() {
+        const selected = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+            .map(cb => parseInt(cb.value));
+
+        if (selected.length === 0) {
+            alert("삭제할 학생을 선택하세요.");
+            return;
+        }
+
+        if (!confirm("정말 선택한 학생들을 삭제하시겠습니까?")) return;
+
+        fetch("{% url 'delete_selected_students' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ student_ids: selected })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(`${data.deleted_count}명의 학생이 삭제되었습니다.`);
+                window.location.reload();
+            } else {
+                alert("삭제 중 오류가 발생했습니다.");
+            }
+        });
+    }
+    
+    function toggleRowSelection(row) {
+        const checkbox = row.querySelector('.student-checkbox');
+        if (!checkbox) return;
+
+        checkbox.checked = !checkbox.checked;
+        row.classList.toggle('selected-row', checkbox.checked);
+    }
+
+    // ✅ 체크박스 직접 클릭 시에도 스타일 유지되게 연결
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.student-checkbox').forEach(cb => {
+            cb.addEventListener('change', function () {
+                const row = this.closest('tr');
+                if (row) {
+                    row.classList.toggle('selected-row', this.checked);
+                }
+            });
+        });
+    });
+    </script>
+
+</div>
+{% endblock %}

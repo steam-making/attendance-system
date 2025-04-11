@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>학생 정보 수정</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+
+    <h3 class="text-center mb-4">학생 정보 수정</h3>
+
+    <div class="card shadow-sm p-4">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="d-grid mt-3">
+                <button type="submit" class="btn btn-primary">수정 완료</button>
+                <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="btn btn-secondary mt-3">← 출석 목록으로 돌아가기</a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

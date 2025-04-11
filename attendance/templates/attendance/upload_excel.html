@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h3>학생 엑셀 등록 ({{ selected_school.name }})</h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">엑셀 파일 업로드 (.xlsx)</label>
+            <input type="file" name="file" accept=".xlsx" required class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">등록하기</button>
+    </form>
+
+    <div class="mt-4">
+        <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="btn btn-secondary">← 출석 목록으로 돌아가기</a>
+    </div>
+</div>
+{% endblock %}

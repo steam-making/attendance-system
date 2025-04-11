@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load extra_filters %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h3 class="mb-0">내 학교 목록</h3>
+        <a href="{% url 'register_school' %}" class="btn btn-outline-success">
+            + 학교 등록
+        </a>
+    </div>
+    
+    <div class="row">
+        {% for school in schools %}
+            <div class="p-3 rounded mb-3 shadow-sm" style="background-color: {{ school_colors|dict_get:school.id }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ school.name }}</strong>  
+                        <span class="text-muted">({{ school.program_name }})</span>
+                    </div>
+                    <div>
+                        <a href="{% url 'attendance_list' %}?school={{ school.id }}" class="btn btn-primary btn-sm">출석체크</a>
+                        <a href="{% url 'update_school' school.id %}" class="btn btn-outline-warning btn-sm">수정</a>
+                        <form method="post" action="{% url 'delete_school' school.id %}" onsubmit="return confirm('삭제하시겠습니까?');" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    
+</div>
+{% endblock %}
