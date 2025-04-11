@@ -5,7 +5,9 @@ django-widget-tweaks==1.5.0
 djangorestframework==3.16.0
 et_xmlfile==2.0.0
 fpdf==1.7.2
+gunicorn==23.0.0
 openpyxl==3.1.5
+packaging==24.2
 pillow==11.1.0
 sqlparse==0.5.3
 typing_extensions==4.12.2
