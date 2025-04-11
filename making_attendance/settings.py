@@ -10,20 +10,37 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+import os
+import dj_database_url
+
+DEBUG = os.getenv("DEBUG", "False") == "True"
+SECRET_KEY = os.getenv("SECRET_KEY", "@t)jq#nm^+c)ldrxv0_6t7p$g&-$0i5lrtx)hl+q6xqn#%lhro")
+ALLOWED_HOSTS = ['.onrender.com']
+
+DATABASES = {
+    'default': dj_database_url.config(default=os.getenv("DATABApostgresql://attendance_db_bici_user:p2LUR7H3SQC4omY4bTcXpLJdJxRA6uqb@dpg-cvsj353e5dus7395k4m0-a.oregon-postgres.render.com/attendance_db_biciSE_URL"))
+}
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-syq1%=r++_e=fa1tph7p3(*4yocfpifzy9vdm!3_w_nqy8n$on'
+# SECRET_KEY = 'django-insecure-syq1%=r++_e=fa1tph7p3(*4yocfpifzy9vdm!3_w_nqy8n$on'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.30.1.100']
 
