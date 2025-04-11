@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 
 urlpatterns = [
+    path('', lambda request: redirect('login', permanent=False)),  # 👉 기본 접속은 로그인으로
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),  # accounts 앱 URL 포함
     path('accounts/', include('django.contrib.auth.urls')),  # 로그인/로그아웃 URL 추가
