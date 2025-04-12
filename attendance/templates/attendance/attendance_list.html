@@ -5,16 +5,11 @@
         background-color:#f8f8f8 !important;
     }
 
-    .table-wrapper {
-    overflow-x: auto;        /* ✅ 가로 스크롤 허용 */
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
+    /* 테이블 안의 셀 텍스트 잘림 방지 */
+    table td, table th {
+    white-space: nowrap;
     }
-
-    .table-wrapper table {
-    min-width: 900px;        /* ✅ 테이블 너비가 넘칠 수 있게 설정 */
-    width: max-content;      /* ✅ 내용에 따라 자동 너비 확장 */
-    }
+</style>
 
 </style>
 {% endblock %}
@@ -54,69 +49,81 @@
         
         {% for department, students in departments.items %}
         <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
-        <table class="table text-center align-middle w-auto">
-            <thead class="{{ color_map_header|dict_get:department }}">
+        <div class="d-flex overflow-auto">
+            <!-- ✅ 왼쪽 고정 열 -->
+            <table class="table text-center align-middle m-0" style="min-width: 250px;">
+                <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
                     <th>학년/반/번호</th>
                     <th>이름</th>
-                    <th>체크</th>
-                    <th>출석시간</th>
-                    <th>설정</th>
                 </tr>
-            </thead>
-            <tbody>
+                </thead>
+                <tbody>
                 {% for student in students %}
-                <tr onclick="toggleRowSelection(this)" >
+                <tr onclick="toggleRowSelection(this)">
                     <td><input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}"></td>
                     <td>{{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}</td>
                     <td>{{ student.name }}</td>
-                    
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- ✅ 오른쪽 스크롤 열 -->
+            <div style="overflow-x: auto; width: 100%;">
+                <table class="table text-center align-middle m-0" style="min-width: 700px;">
+                <thead class="{{ color_map_header|dict_get:department }}">
+                    <tr>
+                    <th>체크</th>
+                    <th>출석시간</th>
+                    <th>설정</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
                     <td id="attendance-cell-{{ student.id }}">
                         {% if student.id in attendances %}
-                            <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
-                            <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다." class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
+                        <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
+                        <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다." class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
                         {% else %}
-                            <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')" class="btn btn-success btn-sm">출석</button>
-                            <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')" class="btn btn-warning btn-sm">지각</button>
-                            <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')" class="btn btn-danger btn-sm">결석</button>
+                        <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')" class="btn btn-success btn-sm">출석</button>
+                        <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')" class="btn btn-warning btn-sm">지각</button>
+                        <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')" class="btn btn-danger btn-sm">결석</button>
                         {% endif %}
-
                     </td>
-
                     <td id="time-cell-{{ student.id }}">
                         {% with attendances|dict_get:student.id as attendance %}
-                            {% if attendance %}
-                                {{ attendance.created_at|date:"H:i:s" }}
-                            {% else %}
-                                -
-                            {% endif %}
+                        {% if attendance %}
+                            {{ attendance.created_at|date:"H:i:s" }}
+                        {% else %}
+                            -
+                        {% endif %}
                         {% endwith %}
                     </td>
-
-                    <td id="attendance-cell-{{ student.id }}">
+                    <td>
                         <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
-                        <!-- 이동 버튼: 드롭다운 + 자동 submit -->
                         <form method="post" action="{% url 'move_student_department' student.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <select name="department" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                                <option disabled selected>이동</option>
-                                <option value="1부">1부</option>
-                                <option value="2부">2부</option>
-                                <option value="3부">3부</option>
-                            </select>
+                        {% csrf_token %}
+                        <select name="department" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                            <option disabled selected>이동</option>
+                            <option value="1부">1부</option>
+                            <option value="2부">2부</option>
+                            <option value="3부">3부</option>
+                        </select>
                         </form>
                         <form method="post" action="{% url 'delete_student' student.id %}" class="d-inline" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">삭제</button>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1">삭제</button>
                         </form>
                     </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center">등록된 학생이 없습니다.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+            </div>
         {% endfor %}
     </div>
 
