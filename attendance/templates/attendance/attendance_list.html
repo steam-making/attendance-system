@@ -55,9 +55,7 @@
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
                     <th>부서</th>
-                    <th>학년</th>
-                    <th>반</th>
-                    <th>번호</th>
+                    <th>학년/반/번호</th>
                     <th>이름</th>
                     <th>체크</th>
                     <th>출석시간</th>
@@ -69,9 +67,7 @@
                 <tr onclick="toggleRowSelection(this)" >
                     <td><input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}"></td>
                     <td>{{ student.department}}</td>
-                    <td>{{ student.grade }}</td>
-                    <td>{{ student.classroom }}</td>
-                    <td>{{ student.number }}</td>
+                    <td>{{ student.grade }}{{ student.classroom }}{{ student.number }}</td>
                     <td>{{ student.name }}</td>
                     
                     <td id="attendance-cell-{{ student.id }}">
@@ -95,7 +91,7 @@
                             {% endif %}
                         {% endwith %}
                     </td>
-                    
+
                     <td id="attendance-cell-{{ student.id }}">
                         <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
                         <!-- 이동 버튼: 드롭다운 + 자동 submit -->
