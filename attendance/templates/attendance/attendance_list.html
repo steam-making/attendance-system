@@ -5,20 +5,19 @@
         background-color:#f8f8f8 !important;
     }
 
-    {% comment %} .table {
+    .table {
     white-space: nowrap;        /* 줄바꿈 금지 */
     overflow-x: auto;           /* 넘치면 좌우 스크롤 허용 */
-    display: block;             /* 모바일에서 강제로 가로 스크롤 */
-    } {% endcomment %}
+    }
 
 </style>
 {% endblock %}
 {% block content %}
 {% load static %}
 {% load extra_filters %}
-<div class="container-fluid mt-4">
+<div class="container-fluid p-0 m-0">
 
-   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+   <div class="d-flex justify-content-between align-items-center flex-wrap">
         
         <!-- ✅ 학교 선택 드롭다운 -->
         <form method="get" class="d-flex align-items-center">
@@ -45,11 +44,10 @@
         {% endfor %}
     {% endif %}
 
-    <div class="container-fluid mt-4">
+    <div class="container-fluid p-0 m-0">
         
-
         {% for department, students in departments.items %}
-        <h4 class="mt-5">{{ department }} ({{ students|length }}명)</h4>
+        <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
         <table class="table w-100 text-center align-middle">
             <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
