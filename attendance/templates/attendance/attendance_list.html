@@ -4,6 +4,13 @@
     tr.selected-row > td {
         background-color:#f8f8f8 !important;
     }
+
+    .table {
+    white-space: nowrap;        /* 줄바꿈 금지 */
+    overflow-x: auto;           /* 넘치면 좌우 스크롤 허용 */
+    display: block;             /* 모바일에서 강제로 가로 스크롤 */
+}
+
 </style>
 {% endblock %}
 {% block content %}
