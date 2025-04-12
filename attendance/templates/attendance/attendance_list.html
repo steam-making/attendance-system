@@ -54,7 +54,6 @@
             <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
-                    <th>부서</th>
                     <th>학년/반/번호</th>
                     <th>이름</th>
                     <th>체크</th>
@@ -66,8 +65,7 @@
                 {% for student in students %}
                 <tr onclick="toggleRowSelection(this)" >
                     <td><input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}"></td>
-                    <td>{{ student.department}}</td>
-                    <td>{{ student.grade }}{{ student.classroom }}{{ student.number }}</td>
+                    <td>{{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}</td>
                     <td>{{ student.name }}</td>
                     
                     <td id="attendance-cell-{{ student.id }}">
