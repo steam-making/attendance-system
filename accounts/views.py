@@ -7,6 +7,20 @@ from django.contrib.auth import update_session_auth_hash
 from .forms import UserUpdateForm, CustomPasswordChangeForm
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
+from django.contrib.auth.views import LoginView
+
+class CustomLoginView(LoginView):
+    def form_valid(self, form):
+        remember_me = self.request.POST.get('remember_me')
+        
+        if remember_me:
+            # 2주 동안 유지
+            self.request.session.set_expiry(60 * 60 * 24 * 14)  
+        else:
+            # 브라우저 닫을 때 세션 만료 (기본값)
+            self.request.session.set_expiry(0)
+            
+        return super().form_valid(form)
 
 def check_username(request):
     username = request.GET.get("username", None)

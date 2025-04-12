@@ -36,6 +36,10 @@ DATABASES = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# 2주 자동 로그인 허용을 위한 세션 기간 (초 단위)
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14  # 2주
+SESSION_SAVE_EVERY_REQUEST = True       # 매 요청마다 세션 갱신
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 
