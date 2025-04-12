@@ -5,11 +5,15 @@
         background-color:#f8f8f8 !important;
     }
 
-    .table {
-
-    white-space: nowrap;        /* 줄바꿈 금지 */
-    overflow-x: auto;
+    .table-wrapper {
+    overflow-x: auto;        /* ✅ 가로 스크롤 허용 */
     -webkit-overflow-scrolling: touch;
+    width: 100%;
+    }
+
+    .table-wrapper table {
+    min-width: 900px;        /* ✅ 테이블 너비가 넘칠 수 있게 설정 */
+    width: max-content;      /* ✅ 내용에 따라 자동 너비 확장 */
     }
 
 </style>
@@ -46,11 +50,11 @@
         {% endfor %}
     {% endif %}
 
-    <div class="container-fluid p-0 m-0">
+    <div class="table-wrapper">
         
         {% for department, students in departments.items %}
         <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
-        <table class="table text-center align-middle">
+        <table class="table text-center align-middle w-auto">
             <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
