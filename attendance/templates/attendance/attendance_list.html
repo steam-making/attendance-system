@@ -5,11 +5,11 @@
         background-color:#f8f8f8 !important;
     }
 
-    .table {
+    {% comment %} .table {
     white-space: nowrap;        /* 줄바꿈 금지 */
     overflow-x: auto;           /* 넘치면 좌우 스크롤 허용 */
     display: block;             /* 모바일에서 강제로 가로 스크롤 */
-}
+    } {% endcomment %}
 
 </style>
 {% endblock %}
@@ -45,12 +45,12 @@
         {% endfor %}
     {% endif %}
 
-    <div class="container mt-5">
+    <div class="container-fluid mt-4">
         
 
         {% for department, students in departments.items %}
         <h4 class="mt-5">{{ department }} ({{ students|length }}명)</h4>
-        <table class="table text-center align-middle">
+        <table class="table w-100 text-center align-middle">
             <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
