@@ -59,8 +59,8 @@
                     <th>반</th>
                     <th>번호</th>
                     <th>이름</th>
-                    <th>출석시간</th>
                     <th>체크</th>
+                    <th>출석시간</th>
                     <th>설정</th>
                 </tr>
             </thead>
@@ -73,16 +73,7 @@
                     <td>{{ student.classroom }}</td>
                     <td>{{ student.number }}</td>
                     <td>{{ student.name }}</td>
-                    <td id="time-cell-{{ student.id }}">
-                        {% with attendances|dict_get:student.id as attendance %}
-                            {% if attendance %}
-                                {{ attendance.created_at|date:"H:i:s" }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        {% endwith %}
-                    </td>
-
+                    
                     <td id="attendance-cell-{{ student.id }}">
                         {% if student.id in attendances %}
                             <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
@@ -94,6 +85,17 @@
                         {% endif %}
 
                     </td>
+
+                    <td id="time-cell-{{ student.id }}">
+                        {% with attendances|dict_get:student.id as attendance %}
+                            {% if attendance %}
+                                {{ attendance.created_at|date:"H:i:s" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    
                     <td id="attendance-cell-{{ student.id }}">
                         <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
                         <!-- 이동 버튼: 드롭다운 + 자동 submit -->
