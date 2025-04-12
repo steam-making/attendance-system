@@ -6,8 +6,10 @@
     }
 
     .table {
+
     white-space: nowrap;        /* 줄바꿈 금지 */
-    overflow-x: auto;           /* 넘치면 좌우 스크롤 허용 */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     }
 
 </style>
@@ -48,7 +50,7 @@
         
         {% for department, students in departments.items %}
         <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
-        <table class="table w-100 text-center align-middle">
+        <table class="table text-center align-middle">
             <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>

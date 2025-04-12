@@ -9,9 +9,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     {% block extra_head %}
+    <style>
+        /* 🔒 전체 페이지는 좌우로 흔들리지 않게 */
+    body {
+    overflow-x: hidden;
+    }
+    </style>
     {% endblock %}
 
     
+   
 
 </head>
 <body>
