@@ -26,6 +26,13 @@ DATABASES = {
     'default': dj_database_url.config(default=os.getenv("DATABApostgresql://attendance_db_bici_user:p2LUR7H3SQC4omY4bTcXpLJdJxRA6uqb@dpg-cvsj353e5dus7395k4m0-a.oregon-postgres.render.com/attendance_db_biciSE_URL"))
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -96,12 +103,7 @@ WSGI_APPLICATION = 'making_attendance.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+
 
 
 # Password validation
