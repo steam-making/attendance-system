@@ -12,18 +12,24 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 
 from pathlib import Path
+import os
+import dj_database_url
+from dotenv import load_dotenv
+
+# .env 파일 로딩
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-import os
-import dj_database_url
 
+
+SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 DEBUG = os.getenv("DEBUG", "False") == "True"
-SECRET_KEY = os.getenv("SECRET_KEY", "@t)jq#nm^+c)ldrxv0_6t7p$g&-$0i5lrtx)hl+q6xqn#%lhro")
+
 ALLOWED_HOSTS = ['.onrender.com']
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv("DATABApostgresql://attendance_db_bici_user:p2LUR7H3SQC4omY4bTcXpLJdJxRA6uqb@dpg-cvsj353e5dus7395k4m0-a.oregon-postgres.render.com/attendance_db_biciSE_URL"))
+    'default': dj_database_url.config(default=os.getenv("postgresql://attendance_db_bici_user:p2LUR7H3SQC4omY4bTcXpLJdJxRA6uqb@dpg-cvsj353e5dus7395k4m0-a.oregon-postgres.render.com/attendance_db_bici"))
 }
 
 # DATABASES = {
