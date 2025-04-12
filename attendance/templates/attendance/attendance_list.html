@@ -52,7 +52,6 @@
                     <th>반</th>
                     <th>번호</th>
                     <th>이름</th>
-                    <th>학부모연락처</th>
                     <th>출석시간</th>
                     <th>체크</th>
                     <th>설정</th>
@@ -67,7 +66,6 @@
                     <td>{{ student.classroom }}</td>
                     <td>{{ student.number }}</td>
                     <td>{{ student.name }}</td>
-                    <td>{{ student.phone }}</td>
                     <td id="time-cell-{{ student.id }}">
                         {% with attendances|dict_get:student.id as attendance %}
                             {% if attendance %}
