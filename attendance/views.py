@@ -187,10 +187,15 @@ def ajax_attendance_check(request, student_id):
     if request.method == 'POST':
         import json
         data = json.loads(request.body)
+        print("📦 받은 데이터:", data)
         status = data.get('status', '출석')  # 기본값은 '출석'
+        program = data.get('program_name')
+
+        print(f"✅ 상태: {status}, 프로그램명: {program}")
 
         # 중복 확인
         already_checked = Attendance.objects.filter(student=student, date=today).exists()
+        print(f"✅ 중복확인 : {already_checked}")
         if already_checked:
             return JsonResponse({'status': 'already_checked', 'student': student.name})
 
@@ -201,7 +206,7 @@ def ajax_attendance_check(request, student_id):
             'student': student.name,
             'phone': student.phone,
             'attendance_status': status,
-            "program_name": student.school.program_name,
+            'program_name': student.school.program_name,
             'created_at': timezone.localtime(attendance.created_at).strftime('%H:%M:%S')  # ✅ 출석 시간 추가
         })
 
