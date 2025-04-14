@@ -200,13 +200,13 @@ def ajax_attendance_check(request, student_id):
             return JsonResponse({'status': 'already_checked', 'student': student.name})
 
         attendance = Attendance.objects.create(student=student, status=status)
-
+        print(f"✅ 오브젝트추가 : {attendance}")
         return JsonResponse({
             'status': 'success',
             'student': student.name,
             'phone': student.phone,
             'attendance_status': status,
-            'program_name': student.school.program_name,
+            'program_name': program,
             'created_at': timezone.localtime(attendance.created_at).strftime('%H:%M:%S')  # ✅ 출석 시간 추가
         })
 
