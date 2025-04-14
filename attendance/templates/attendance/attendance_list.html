@@ -97,15 +97,20 @@
                 'X-CSRFToken': '{{ csrf_token }}',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ status: status })  // ✅ 상태값 전송
+            body: JSON.stringify({ 
+                status: status 
+                program_name: '{{ selected_school.program_name }}'
+            })  // ✅ 상태값 전송
         })
         .then(response => response.json())
         .then(data => {
             console.log("응답:", data);  // ✅ 디버깅용
             if (data.status === 'success') {
+                const program = data.
                 const phone = data.phone;
                 const name = data.student;
                 const createdAt = data.created_at;  // ✅ 출석시간
+                const program = data.program_name;  // ✅ 서버 응답에서 프로그램명 받기
                 const message = `${name}님 오늘 ${status} 처리되었습니다.`;
                                 
                 // ✅ UI 변경 (문자 링크 포함)

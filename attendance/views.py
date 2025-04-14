@@ -201,6 +201,7 @@ def ajax_attendance_check(request, student_id):
             'student': student.name,
             'phone': student.phone,
             'attendance_status': status,
+            "program_name": student.school.program_name,
             'created_at': timezone.localtime(attendance.created_at).strftime('%H:%M:%S')  # ✅ 출석 시간 추가
         })
 
