@@ -11,32 +11,30 @@
     <h3 class="text-center mb-4">학생 정보 수정</h3>
 
     <div class="card shadow-sm p-4">
+
+        <!-- 전체 form은 수정용 -->
+        <form method="post">
+            {% csrf_token %}
             {{ form.as_p }}
-            <div class="row mt-3">
-                <!-- 수정 버튼 (왼쪽) -->
-                <div class="col-6">
-                    <form method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary w-100">수정 완료</button>
-                    </form>
-                </div>
 
-                <!-- 삭제 버튼 (오른쪽) -->
-                <div class="col-6">
-                    {% if student.id %}
-                    <form method="post" action="{% url 'delete_student' student.id %}" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger w-100">학생 삭제</button>
-                    </form>
-                    {% endif %}
-                </div>
+            <div class="d-flex justify-content-between gap-2 mt-3">
+                <!-- 수정 버튼 -->
+                <button type="submit" class="btn btn-primary w-100">수정 완료</button>
             </div>
-
-
-            <!-- 출석 목록으로 돌아가기 -->
-            <div class="d-grid mt-3">
+        </form>
+         <!-- 삭제 버튼은 별도 form으로 빼고 confirm 붙이기 -->
+            {% if student.id %}
+                <form method="post" action="{% url 'delete_student' student.id %}" onsubmit="return confirm('정말 삭제하시겠습니까?');" class="d-grid mt-3 w-100">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">학생 삭제</button>
+                </form>
+            {% endif %}
+        <!-- 출석 목록으로 돌아가기 버튼 -->
+            <div class="d-grid mt-3 w-100">
                 <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="btn btn-secondary">← 출석 목록으로 돌아가기</a>
             </div>
+
+    </div>
     </div>
 
 </body>
