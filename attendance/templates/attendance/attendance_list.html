@@ -18,7 +18,7 @@
 {% load extra_filters %}
 <div class="container-fluid p-0 m-0">
 
-   <div class="d-flex justify-content-between align-items-center flex-wrap">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
         
         <!-- ✅ 학교 선택 드롭다운 -->
         <form method="get" class="d-flex align-items-center">
@@ -45,18 +45,20 @@
         {% endfor %}
     {% endif %}
 
-    <div class="table-wrapper">
+    <div style="flex: 0 0 auto;">
         
         {% for department, students in departments.items %}
         <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
-        <div class="d-flex overflow-auto">
             <!-- ✅ 왼쪽 고정 열 -->
-            <table class="table text-center align-middle m-0" style="min-width: 250px;">
+            <div style="flex: 0 0 auto;">
+            <table class="table text-center m-0" style="min-width: 300px;">
+                
                 <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
                     <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
                     <th>학년/반/번호</th>
                     <th>이름</th>
+                    <th>체크</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -65,24 +67,6 @@
                     <td><input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}"></td>
                     <td>{{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}</td>
                     <td>{{ student.name }}</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-
-            <!-- ✅ 오른쪽 스크롤 열 -->
-            <div style="overflow-x: auto; width: 100%;">
-                <table class="table text-center align-middle m-0" style="min-width: 700px;">
-                <thead class="{{ color_map_header|dict_get:department }}">
-                    <tr>
-                    <th>체크</th>
-                    <th>출석시간</th>
-                    <th>설정</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                    <tr>
                     <td id="attendance-cell-{{ student.id }}">
                         {% if student.id in attendances %}
                         <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
@@ -91,42 +75,16 @@
                         <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')" class="btn btn-success btn-sm">출석</button>
                         <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')" class="btn btn-warning btn-sm">지각</button>
                         <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')" class="btn btn-danger btn-sm">결석</button>
-                        {% endif %}
-                    </td>
-                    <td id="time-cell-{{ student.id }}">
-                        {% with attendances|dict_get:student.id as attendance %}
-                        {% if attendance %}
-                            {{ attendance.created_at|date:"H:i:s" }}
-                        {% else %}
-                            -
-                        {% endif %}
-                        {% endwith %}
-                    </td>
-                    <td>
                         <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
-                        <form method="post" action="{% url 'move_student_department' student.id %}" class="d-inline">
-                        {% csrf_token %}
-                        <select name="department" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
-                            <option disabled selected>이동</option>
-                            <option value="1부">1부</option>
-                            <option value="2부">2부</option>
-                            <option value="3부">3부</option>
-                        </select>
-                        </form>
-                        <form method="post" action="{% url 'delete_student' student.id %}" class="d-inline" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1">삭제</button>
-                        </form>
+                        {% endif %}
                     </td>
-                    </tr>
-                    {% endfor %}
+                </tr>
+                {% endfor %}
                 </tbody>
-                </table>
-            </div>
+            </table>
             </div>
         {% endfor %}
-    </div>
-
+        </div>
     <script>
 
     function toggleDepartment(dept, source) {

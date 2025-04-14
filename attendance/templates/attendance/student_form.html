@@ -11,14 +11,32 @@
     <h3 class="text-center mb-4">학생 정보 수정</h3>
 
     <div class="card shadow-sm p-4">
-        <form method="post">
-            {% csrf_token %}
             {{ form.as_p }}
-            <div class="d-grid mt-3">
-                <button type="submit" class="btn btn-primary">수정 완료</button>
-                <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="btn btn-secondary mt-3">← 출석 목록으로 돌아가기</a>
+            <div class="row mt-3">
+                <!-- 수정 버튼 (왼쪽) -->
+                <div class="col-6">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-100">수정 완료</button>
+                    </form>
+                </div>
+
+                <!-- 삭제 버튼 (오른쪽) -->
+                <div class="col-6">
+                    {% if student.id %}
+                    <form method="post" action="{% url 'delete_student' student.id %}" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger w-100">학생 삭제</button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
-        </form>
+
+
+            <!-- 출석 목록으로 돌아가기 -->
+            <div class="d-grid mt-3">
+                <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="btn btn-secondary">← 출석 목록으로 돌아가기</a>
+            </div>
     </div>
 
 </body>

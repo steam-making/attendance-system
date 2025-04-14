@@ -21,7 +21,11 @@ urlpatterns = [
     path('student/create/', views.student_create, name='student_create'),
 
     # 학생 수정 (웹용)
-    path('student/update/<int:student_id>/', views.student_update, name='student_update'),
+    path('student/update/<int:pk>/', views.student_update, name='student_update'),\
+        
+    # 학생 삭제
+    path('students/delete_selected/', delete_selected_students, name='delete_selected_students'),
+    path('student/delete/<int:pk>/', views.delete_student, name='delete_student'),
     
     # 오늘 출석
     path('api/attendance/today/', views_api.attendance_today_list, name='attendance_today'),
@@ -29,9 +33,7 @@ urlpatterns = [
     # 엑셀 업로드
     path('students/upload/', upload_students_excel, name='upload_students_excel'),
     
-    # 학생 삭제
-    path('students/delete_selected/', delete_selected_students, name='delete_selected_students'),
-    path('student/delete/<int:pk>/', views.delete_student, name='delete_student'),
+    
     # 학교 등록
     path('schools/register/', register_school, name='register_school'),
     # 학교 수정 

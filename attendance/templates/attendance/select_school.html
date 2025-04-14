@@ -20,10 +20,7 @@
                     <div>
                         <a href="{% url 'attendance_list' %}?school={{ school.id }}" class="btn btn-primary btn-sm">출석체크</a>
                         <a href="{% url 'update_school' school.id %}" class="btn btn-outline-warning btn-sm">수정</a>
-                        <form method="post" action="{% url 'delete_school' school.id %}" onsubmit="return confirm('삭제하시겠습니까?');" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm">삭제</button>
-                        </form>
+                    
                     </div>
                 </div>
             </div>

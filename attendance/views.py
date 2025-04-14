@@ -70,6 +70,17 @@ def delete_student(request, pk):
         return redirect(f"/attendance/list/?school={student.school.id}")
     return HttpResponse("허용되지 않은 접근입니다.", status=405)
 
+@csrf_exempt
+def delete_selected_students(request):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        student_ids = data.get('student_ids', [])
+        Student.objects.filter(id__in=student_ids).delete()
+        return JsonResponse({'status': 'success', 'deleted_count': len(student_ids)})
+
+    return JsonResponse({'status': 'invalid_method'})
+
 @login_required
 def register_student(request):
     school_id = request.GET.get('school')  # ✅ URL에서 school ID 가져오기
@@ -123,19 +134,6 @@ def register_school(request):
     else:
         form = SchoolForm()
     return render(request, 'attendance/register_school.html', {'form': form})
-
-
-@csrf_exempt
-def delete_selected_students(request):
-    if request.method == 'POST':
-        import json
-        data = json.loads(request.body)
-        student_ids = data.get('student_ids', [])
-        Student.objects.filter(id__in=student_ids).delete()
-        return JsonResponse({'status': 'success', 'deleted_count': len(student_ids)})
-
-    return JsonResponse({'status': 'invalid_method'})
-
 
 @login_required
 def upload_students_excel(request):
@@ -209,18 +207,22 @@ def ajax_attendance_check(request, student_id):
     return JsonResponse({'status': 'invalid_method'})
 
 
-def student_update(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
+def student_update(request, pk):
+    student = get_object_or_404(Student, pk=pk)
 
     if request.method == 'POST':
         form = StudentForm(request.POST, instance=student)
         if form.is_valid():
             form.save()
-            return redirect('attendance_list')  # 수정 후 목록으로 이동
+            return redirect('attendance_list')  # 또는 적절한 페이지
     else:
         form = StudentForm(instance=student)
 
-    return render(request, 'attendance/student_form.html', {'form': form})
+    return render(request, 'attendance/student_form.html', {
+        'form': form,
+        'student': student,
+        'selected_school': student.school
+        })
 
 def student_create(request):
     school_id = request.GET.get('school')  # ✅ URL에서 school ID 가져오기
