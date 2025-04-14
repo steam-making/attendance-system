@@ -199,7 +199,7 @@ def ajax_attendance_check(request, student_id):
         if already_checked:
             return JsonResponse({'status': 'already_checked', 'student': student.name})
 
-        attendance = Attendance.objects.create(student=student, status=status, program=program, status=status)
+        attendance = Attendance.objects.create(student=student, status=status, program=program,)
         print(f"✅ 오브젝트추가 : {attendance}")
         return JsonResponse({
             'status': 'success',
