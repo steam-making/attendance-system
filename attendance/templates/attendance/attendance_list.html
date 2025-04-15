@@ -106,16 +106,11 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ended') {
-                {% comment %} // ✅ 문자 메시지 실행 (안드로이드용)
-                const message = `${name}님 오늘 수업이 종료되었습니다.`;
-                const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
-                window.location.href = smsUrl;  // 스마트폰에서 문자 앱 열기
-
-                // ✅ UI 업데이트 (옵션: 행 삭제 또는 버튼 비활성화)
-                const row = document.getElementById(rowId).closest('tr');
-                if (row) {
-                    row.remove();  // 리스트에서 제거 (선택사항)
-                } {% endcomment %}
+                
+                // ✅ "수업 종료" 메시지로 버튼 영역 교체
+                document.getElementById(rowId).innerHTML = `
+                    <span class="text-secondary fw-bold">✔ 수업 종료</span>
+                `;
             } else {
                 alert('출석 정보가 없습니다.');
             }
