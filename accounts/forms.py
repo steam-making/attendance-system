@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from .models import CustomUser
 
 EMAIL_DOMAINS = [
     ('naver.com', 'naver.com'),
@@ -15,7 +16,7 @@ class SignUpForm(UserCreationForm):
     email_id = forms.CharField(label="이메일 아이디", max_length=100, required=True)
     email_domain = forms.ChoiceField(label="이메일 도메인", choices=EMAIL_DOMAINS, required=True)
     email_custom = forms.CharField(label="직접입력 도메인", required=False)
-    phone = forms.CharField(label="전화번호", max_length=20)
+    phone = forms.CharField(label="전화번호", max_length=20 ,required=True)
 
     class Meta:
         model = get_user_model()  # CustomUser 모델 사용 시
@@ -55,13 +56,15 @@ class SignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
-
+        
 class UserUpdateForm(forms.ModelForm):
-    email = forms.EmailField(label="이메일", required=True)
-
     class Meta:
-        model = get_user_model() 
-        fields = ['username', 'email']
+        model = CustomUser
+        fields = ['username', 'email', 'phone', 'first_name']  # ✅ 여기에 포함되어 있어야 함
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['phone'].required = True  
         
 class CustomPasswordChangeForm(PasswordChangeForm):
     old_password = forms.CharField(label="현재 비밀번호", widget=forms.PasswordInput(attrs={'class': 'form-control'}))

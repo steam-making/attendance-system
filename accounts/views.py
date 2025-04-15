@@ -9,6 +9,13 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.contrib.auth.views import LoginView
 
+User = get_user_model()
+
+def check_username_duplicate(request):
+    username = request.GET.get('username')
+    exists = User.objects.filter(username=username).exists()
+    return JsonResponse({'exists': exists})
+
 class CustomLoginView(LoginView):
     def form_valid(self, form):
         remember_me = self.request.POST.get('remember_me')
