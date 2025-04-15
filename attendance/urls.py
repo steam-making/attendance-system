@@ -30,9 +30,11 @@ urlpatterns = [
     # 오늘 출석
     path('api/attendance/today/', views_api.attendance_today_list, name='attendance_today'),
     
+    # 수업 종료
+    path('ajax/end/<int:student_id>/', views.mark_attendance_end, name='attendance_end'),
+    
     # 엑셀 업로드
     path('students/upload/', upload_students_excel, name='upload_students_excel'),
-    
     
     # 학교 등록
     path('schools/register/', register_school, name='register_school'),

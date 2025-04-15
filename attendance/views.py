@@ -27,6 +27,27 @@ school_colors = [
     "#f9f9f9",  # 연한 회색
 ]
 
+@csrf_exempt
+@login_required
+def mark_attendance_end(request, student_id):
+    if request.method == 'POST':
+        student = get_object_or_404(Student, id=student_id, school__user=request.user)
+        today = timezone.localdate()
+        try:
+            attendance = Attendance.objects.get(student=student, date=today)
+            print("📦 받은 데이터:", attendance)
+            attendance.status = '종료'
+            attendance.save()
+            return JsonResponse({
+                'status': 'ended',
+                'student': student.name,
+                'phone': student.phone,
+                'student_id': student.id
+            })
+        except Attendance.DoesNotExist:
+            return JsonResponse({'status': 'not_found'}, status=404)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
 @login_required
 def update_school(request, pk):
     school = get_object_or_404(School, pk=pk, user=request.user)
