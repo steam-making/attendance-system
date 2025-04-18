@@ -70,17 +70,23 @@
                     <td>{{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}</td>
                     <td>{{ student.name }}</td>
                     <td id="attendance-cell-{{ student.id }}">
-                        {% if student.id in attendances %}
-                            <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
-                            <!-- 종료 버튼 -->
-                            <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')" class="btn btn-outline-secondary btn-sm ms-2">종료</button>
-                            <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다." class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
+                        {% with attendances|dict_get:student.id as attendance %}
+                        {% if attendance %}
+                            {% if attendance.status == '종료' %}
+                                <span class="text-secondary fw-bold">✔ 수업 종료</span>
+                            {% elif student.id in attendances %}
+                                <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
+                                <!-- 종료 버튼 -->
+                                <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')" class="btn btn-outline-secondary btn-sm ms-2">종료</button>
+                                <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다." class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
+                            {% endif %}
                         {% else %}
                             <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')" class="btn btn-success btn-sm">출석</button>
                             <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')" class="btn btn-warning btn-sm">지각</button>
                             <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')" class="btn btn-danger btn-sm">결석</button>
                             <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
                         {% endif %}
+                        {% endwith %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -94,6 +100,8 @@
 
 </div>
 <script>
+   
+
     function endAttendance(studentId, rowId, name, phone) {
         fetch(`/attendance/ajax/end/${studentId}/`, {
             method: 'POST',

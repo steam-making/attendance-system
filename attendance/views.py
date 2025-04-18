@@ -10,6 +10,8 @@ from collections import defaultdict, OrderedDict
 from .forms import SchoolForm
 from django.contrib.auth.decorators import login_required
 from attendance.models import School
+import json
+from datetime import date
 
 color_map_header = {
     "1부": "table-primary",
@@ -26,6 +28,26 @@ school_colors = [
     "#f0f4ff",  # 연한 하늘
     "#f9f9f9",  # 연한 회색
 ]
+
+@csrf_exempt
+def update_today_attendance_status(request, student_id):
+    if request.method == "PATCH":
+        try:
+            attendance = Attendance.objects.get(student__id=student_id, date=date.today())
+            data = json.loads(request.body)
+            new_status = data.get("status")
+
+            if new_status:
+                attendance.status = new_status
+                attendance.save()
+                return JsonResponse({'message': '출석 상태가 변경되었습니다.'}, status=200)
+            else:
+                return JsonResponse({'error': 'status 값이 필요합니다.'}, status=400)
+
+        except Attendance.DoesNotExist:
+            return JsonResponse({'error': '출석 기록이 존재하지 않습니다.'}, status=404)
+    else:
+        return JsonResponse({'error': '허용되지 않은 메서드입니다.'}, status=405)    
 
 @csrf_exempt
 @login_required
