@@ -58,7 +58,7 @@ def mark_attendance_end(request, student_id):
         try:
             attendance = Attendance.objects.get(student=student, date=today)
             print("📦 받은 데이터:", attendance)
-            attendance.status = '종료'
+            attendance.status = '종료처리'
             attendance.save()
             return JsonResponse({
                 'status': 'ended',
