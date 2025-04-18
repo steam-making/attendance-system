@@ -72,7 +72,7 @@
                     <td id="attendance-cell-{{ student.id }}">
                         {% with attendances|dict_get:student.id as attendance %}
                         {% if attendance %}
-                            {% if attendance.status == '종료' %}
+                            {% if attendance.status == '종료처리' %}
                                 <span class="text-secondary fw-bold">✔ 수업 종료</span>
                             {% elif student.id in attendances %}
                                 <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
