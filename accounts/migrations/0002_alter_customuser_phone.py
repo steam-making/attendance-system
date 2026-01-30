@@ -3,6 +3,11 @@
 from django.db import migrations, models
 
 
+def fill_missing_phone(apps, schema_editor):
+    CustomUser = apps.get_model('accounts', 'CustomUser')
+    CustomUser.objects.filter(phone__isnull=True).update(phone='')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(fill_missing_phone, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='customuser',
             name='phone',
