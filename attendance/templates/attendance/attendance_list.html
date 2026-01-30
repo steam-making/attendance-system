@@ -162,9 +162,19 @@
 
             if (data.status === 'success') {
 
-                if (data.send_sms && window.Android && Android.sendSms) {
-                    Android.sendSms(data.phone, data.sms_message);
+                // ✅ 앱(WebView)에서만 자동문자 실행
+                if (window.Android && typeof window.Android.sendSms === "function") {
+                    const phone = data.phone;
+                    const name = data.student;
+                    const createdAt = data.created_at;
+                    const msg = `${name}님 오늘 ${status} 처리되었습니다. (${createdAt})`;
+
+                    console.log("📩 Android.sendSms 호출:", phone, msg);
+                    window.Android.sendSms(phone, msg);
+                } else {
+                    console.log("⚠️ Android 브릿지 없음(브라우저 접속이거나 브릿지 미연결)");
                 }
+
 
                 const program = data.program_name;
                 const phone = data.phone;

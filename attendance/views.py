@@ -325,6 +325,7 @@ def student_create(request):
         'selected_school': selected_school
     })
     
+@login_required
 def attendance_list(request):
     user = request.user
 
