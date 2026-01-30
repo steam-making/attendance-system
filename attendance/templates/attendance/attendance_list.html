@@ -158,7 +158,15 @@
         })
         .then(response => response.json())
         .then(data => {
-            console.log("checkAttendance 응답:", data);
+
+            console.log("bridge check:", !!window.Android, window.Android);
+
+            console.log("checkAttendance raw:", JSON.stringify(data));
+            console.log("checkAttendance status:", data && data.status);
+
+            if (!data || !data.status) {
+              console.log("❌ data/status 없음", data);
+            }
 
             if (data.status === 'success') {
 
@@ -204,6 +212,9 @@
                 }
             } else if (data.status === 'already_checked') {
                 alert("이미 출석 처리되었습니다.");
+            }
+            else {
+              alert("status=" + (data.status || "NONE") + "\n" + JSON.stringify(data));
             }
         })
         .catch(error => {
