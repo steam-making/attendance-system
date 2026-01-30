@@ -222,38 +222,71 @@ def ajax_attendance_cancel(request, student_id):
         return JsonResponse({'status': 'canceled', 'student': student.name})
     return JsonResponse({'status': 'invalid'})
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 def ajax_attendance_check(request, student_id):
     student = get_object_or_404(Student, id=student_id)
-    today = timezone.now().date()
+    today = timezone.localdate()  # ✅ timezone.now().date() 대신 localdate 권장
 
     if request.method == 'POST':
         import json
-        data = json.loads(request.body)
+        data = json.loads(request.body or "{}")
         print("📦 받은 데이터:", data)
+
         status = data.get('status', '출석')  # 기본값은 '출석'
         program = data.get('program_name')
 
         print(f"✅ 상태: {status}, 프로그램명: {program}")
 
-        # 중복 확인
+        # ✅ 중복 확인
         already_checked = Attendance.objects.filter(student=student, date=today).exists()
         print(f"✅ 중복확인 : {already_checked}")
-        if already_checked:
-            return JsonResponse({'status': 'already_checked', 'student': student.name})
 
-        attendance = Attendance.objects.create(student=student, status=status, program=program,)
+        # ✅ 문자 내용(서버에서 생성)
+        # 필요하면 문구 템플릿만 바꾸면 됨
+        # program이 None일 수 있으니 안전처리
+        program_txt = program or "-"
+        time_txt = timezone.localtime().strftime('%H:%M')
+        sms_message = f"[메듀테크] {student.name} 학생 출석 완료 ({program_txt} / {time_txt})"
+
+        if already_checked:
+            return JsonResponse({
+                'status': 'already_checked',
+                'student': student.name,
+                'phone': student.phone,
+                'attendance_status': status,
+                'program_name': program,
+                'send_sms': False,          # ✅ 중복이면 발송 금지
+                'sms_message': sms_message  # (옵션) 표시/로그용
+            })
+
+        attendance = Attendance.objects.create(
+            student=student,
+            status=status,
+            program=program,
+            date=today  # ✅ 모델에 date 필드가 있으면 명시 (없으면 제거)
+        )
         print(f"✅ 오브젝트추가 : {attendance}")
+
+        created_time = timezone.localtime(attendance.created_at).strftime('%H:%M:%S')
+
         return JsonResponse({
             'status': 'success',
             'student': student.name,
             'phone': student.phone,
             'attendance_status': status,
             'program_name': program,
-            'created_at': timezone.localtime(attendance.created_at).strftime('%H:%M:%S')  # ✅ 출석 시간 추가
+            'created_at': created_time,
+            'send_sms': True,             # ✅ 성공 + 최초 처리만 True
+            'sms_message': sms_message    # ✅ Android로 보낼 최종 메시지
         })
 
     return JsonResponse({'status': 'invalid_method'})
+
 
 
 def student_update(request, pk):

@@ -6,6 +6,13 @@ from .views import select_school, register_school, update_school, delete_school
 
 
 urlpatterns = [
+
+    # ✅ API (앱 표준)
+    path('api/health/', views_api.health, name='api_health'),
+    path('api/students/today/', views_api.students_today, name='api_students_today'),
+    path('api/attendance/check/', views_api.attendance_check_api, name='api_attendance_check'),
+    path('api/attendance/end/', views_api.attendance_end_api, name='api_attendance_end'),
+
     # 출석 리스트 페이지 (웹용)
     path('', views.select_school, name='select_school'),
     

@@ -161,6 +161,11 @@
             console.log("checkAttendance 응답:", data);
 
             if (data.status === 'success') {
+
+                if (data.send_sms && window.Android && Android.sendSms) {
+                    Android.sendSms(data.phone, data.sms_message);
+                }
+
                 const program = data.program_name;
                 const phone = data.phone;
                 const name = data.student;
