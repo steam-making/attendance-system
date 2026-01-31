@@ -325,30 +325,46 @@ def student_create(request):
         'selected_school': selected_school
     })
     
-@login_required
+@login_required(login_url="/accounts/login/")
 def attendance_list(request):
-    user = request.user
+    # ✅ 혹시라도 비로그인으로 들어오면 즉시 로그인으로
+    if not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/attendance/list/")
 
-    # ✅ 로그인 사용자의 학교 목록
-    schools = School.objects.filter(user=user)
+    user_id = request.user.id  # ✅ 정수 FK 안정화
+
+    # ✅ 로그인 사용자의 학교 목록 (FK는 user_id로 필터링)
+    schools = School.objects.filter(user_id=user_id)
 
     # ✅ GET 파라미터에서 선택된 학교 ID 가져오기
-    selected_school_id = request.GET.get('school')
-    
+    selected_school_id = request.GET.get("school")
+
     if selected_school_id:
-        selected_school = School.objects.filter(id=selected_school_id, user=user).first()
+        selected_school = School.objects.filter(
+            id=selected_school_id,
+            user_id=user_id
+        ).first()
     else:
         selected_school = schools.first()
-    print(selected_school)
+
     # ✅ 선택된 학교에 해당하는 학생만 조회
     students = Student.objects.filter(school=selected_school) if selected_school else []
-    
-    today = timezone.now().date()
-    attendances = {
-        a.student.id: a for a in Attendance.objects.filter(date=today)
-    }
 
-    # ✅ 부서별로 묶되, 학년-반-번호로 정렬해서 넣기
+    today = timezone.now().date()
+
+    # ✅ (권장) 선택된 학교의 학생들만 오늘 출석 가져오기
+    #    학교가 없으면 빈 dict
+    if selected_school:
+        attendances_qs = Attendance.objects.filter(
+            date=today,
+            student__school=selected_school
+        )
+    else:
+        attendances_qs = Attendance.objects.none()
+
+    attendances = {a.student_id: a for a in attendances_qs}
+
+    # ✅ 부서별로 묶되, 학년-반-번호로 정렬
     department_groups = defaultdict(list)
     for student in students:
         department_groups[student.department].append(student)
@@ -358,18 +374,18 @@ def attendance_list(request):
             student_list,
             key=lambda s: (s.grade, s.classroom, s.number)
         )
-        
+
     # ✅ 부서 출력 순서 고정
     ordered_departments = OrderedDict()
-    for dept in ['1부', '2부', '3부']:
+    for dept in ["1부", "2부", "3부"]:
         if dept in department_groups:
             ordered_departments[dept] = department_groups[dept]
 
-    return render(request, 'attendance/attendance_list.html', {
-        'departments': ordered_departments,
-        'attendances': attendances,
-        'schools': schools,                     # ✅ 이 부분 필수!
-        'selected_school': selected_school,
+    return render(request, "attendance/attendance_list.html", {
+        "departments": ordered_departments,
+        "attendances": attendances,
+        "schools": schools,
+        "selected_school": selected_school,
         "color_map_header": color_map_header,
     })
 
