@@ -26,7 +26,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["api.medutech.kr"]
+ALLOWED_HOSTS = [
+    "api.medutech.kr",
+    "medutech.kr",
+    "www.medutech.kr",
+    "127.0.0.1",
+    "localhost",
+    "146.56.108.153",
+]
 
 DATABASES = {
     'default': {
@@ -64,9 +71,6 @@ CSRF_COOKIE_SAMESITE = "Lax"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
-
-#ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.30.1.100','.onrender.com']
-ALLOWED_HOSTS = ['*']
 
 
 # Application definition

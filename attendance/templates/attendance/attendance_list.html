@@ -1,25 +1,100 @@
 {% extends 'base.html' %}
 {% block extra_head %}
 <style>
-    tr.selected-row > td {
-        background-color:#f8f8f8 !important;
-    }
+  tr.selected-row > td { background-color:#f8f8f8 !important; }
 
-    /* 테이블 안의 셀 텍스트 잘림 방지 */
-    table td, table th {
-    white-space: nowrap;
-    }
+  /* ✅ 테이블 */
+  .student-table{
+    width:100%;
+    table-layout: fixed; /* 고정 레이아웃 */
+    border-collapse: collapse;
+  }
+
+  /* ✅ 표 안 내용: 모두 가운데(가로/세로) */
+  .student-table th,
+  .student-table td{
+    text-align:center;
+    vertical-align:middle;
+    white-space:nowrap;          /* 줄바꿈 금지 */
+    padding: .5rem .5rem;        /* 기본 간격 통일 */
+  }
+
+  /* ✅ 헤더 글자는 잘리지 않게 */
+  .student-table th{
+    overflow: visible;
+    text-overflow: clip;
+    font-weight: 700;
+  }
+
+  /* ✅ 본문은 넘치면 ... */
+  .student-table td{
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ✅ 체크칸(첫 열): table-cell 유지 + 체크박스만 가운데 정렬 */
+  th.col-check,
+  td.col-check{
+    padding: 0 !important;       /* 체크칸은 패딩 제거 */
+  }
+  th.col-check input,
+  td.col-check input{
+    display:block;               /* 가운데 정렬 확실 */
+    margin: 0 auto;              /* 가로 중앙 */
+  }
+
+  /* ✅ 버튼 영역: 가운데 정렬 + 한 줄 유지 */
+  .cell-actions{
+    display:flex;
+    justify-content:center;      /* ✅ 가운데 정렬로 변경 */
+    align-items:center;          /* ✅ 세로 중앙 */
+    gap:.25rem;
+    flex-wrap:nowrap;
+    min-width:0;
+  }
+
+  /* ✅ 버튼 XS */
+  .btn-xs{
+    padding: .18rem .38rem;
+    font-size: .75rem;
+    line-height: 1.15;
+    border-radius: .45rem;
+  }
+
+  /* ✅ 모바일: 텍스트 숨기고 아이콘만 */
+  @media (max-width: 768px){
+    .btn-text { display:none !important; }
+  }
+
+  /* ✅ colgroup 폭: 평소엔 균등(3칸), 좁아지면 체크칸만 줄어듦 */
+  /* 기본 체크칸 폭 */
+  col.col-check { width: 40px; }
+
+  /* 나머지 3칸은 균등 분배 */
+  col.col-gbn,
+  col.col-name,
+  col.col-action { width: calc((100% - 40px)/3); }
+
+  /* 화면이 더 좁아지면 체크칸만 더 줄이기 */
+  @media (max-width: 480px){
+    col.col-check { width: 28px; }
+    col.col-gbn,
+    col.col-name,
+    col.col-action { width: calc((100% - 28px)/3); }
+    .student-table th,
+    .student-table td{ padding: .45rem .35rem; }
+  }
 </style>
 
-</style>
 {% endblock %}
+
 {% block content %}
 {% load static %}
 {% load extra_filters %}
 <div class="container-fluid p-0 m-0">
 
     <div class="d-flex justify-content-between align-items-center flex-wrap">
-        
+
         <!-- ✅ 학교 선택 드롭다운 -->
         <form method="get" class="d-flex align-items-center">
             <select name="school" onchange="this.form.submit()" class="form-select me-2">
@@ -31,16 +106,27 @@
             </select>
         </form>
 
-        <!-- ✅ 오른쪽 버튼 그룹 -->
-        <div class="d-flex gap-2 mt-2 mt-md-0">
-            <!-- ✅ 현재 출석 학생 전체 선택 버튼 -->
-            <button type="button" class="btn btn-outline-primary" onclick="selectPresentStudents()">출석모두선택</button>
-            <a href="{% url 'student_create' %}?school={{ selected_school.id }}" class="btn btn-success">학생 등록</a>
-            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="btn btn-warning">엑셀 업로드</a>
-            <button type="button" class="btn btn-danger" onclick="deleteSelectedStudents()">선택 삭제</button>
+        <!-- ✅ 오른쪽 버튼 그룹 (모바일 반응형 개선) -->
+        <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectPresentStudents()">
+                출석모두선택
+            </button>
+
+            <a href="{% url 'student_create' %}?school={{ selected_school.id }}" class="btn btn-success btn-sm">
+                학생 등록
+            </a>
+
+            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="btn btn-warning btn-sm">
+                엑셀 업로드
+            </a>
+
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedStudents()">
+                선택 삭제
+            </button>
         </div>
 
     </div>
+
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">{{ message }}</div>
@@ -48,57 +134,94 @@
     {% endif %}
 
     <div style="flex: 0 0 auto;">
-        
+
         {% for department, students in departments.items %}
         <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
-            <!-- ✅ 왼쪽 고정 열 -->
-            <div style="flex: 0 0 auto;">
-            <table class="table text-center m-0" style="min-width: 300px;">
-                
-                <thead class="{{ color_map_header|dict_get:department }}">
+
+        <div style="flex: 0 0 auto;">
+            <table class="table text-center m-0 student-table" style="min-width:0;">
+              <colgroup>
+                <col class="col-check">
+                <col class="col-gbn">
+                <col class="col-name">
+                <col class="col-action">
+              </colgroup>
+
+              <thead class="{{ color_map_header|dict_get:department }}">
                 <tr>
-                    <th><input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)"></th>
-                    <th>학년/반/번호</th>
-                    <th>이름</th>
-                    <th>체크</th>
+                  <th class="col-check">
+                    <input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)">
+                  </th>
+                  <th class="col-gbn">학년/반/번호</th>
+                  <th class="col-name">이름</th>
+                  <th>체크</th>
                 </tr>
-                </thead>
-                <tbody>
-                {% for student in students %}
+              </thead>
+
+              <tbody>
+              {% for student in students %}
                 <tr onclick="toggleRowSelection(this)">
-                    <td><input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}"></td>
-                    <td>{{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}</td>
-                    <td>{{ student.name }}</td>
-                    <td id="attendance-cell-{{ student.id }}">
-                        {% with attendances|dict_get:student.id as attendance %}
-                        {% if attendance %}
-                            {% if attendance.status == '종료처리' %}
-                                <span class="text-secondary fw-bold">✔ 수업 종료</span>
-                            {% elif student.id in attendances %}
-                                <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
-                                <!-- 종료 버튼 -->
-                                <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')" class="btn btn-outline-secondary btn-sm ms-2">종료</button>
-                                <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다." class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
-                            {% endif %}
-                        {% else %}
-                            <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')" class="btn btn-success btn-sm">출석</button>
-                            <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')" class="btn btn-warning btn-sm">지각</button>
-                            <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')" class="btn btn-danger btn-sm">결석</button>
-                            <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-warning ms-1">수정</a>
-                        {% endif %}
-                        {% endwith %}
-                    </td>
+                  <td class="col-check">
+                    <input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}">
+                  </td>
+
+                  <td class="col-gbn">
+                    {{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}
+                  </td>
+
+                  <td class="col-name">
+                    {{ student.name }}
+                  </td>
+
+                  <td id="attendance-cell-{{ student.id }}">
+                    <div class="cell-actions">
+                      {% with attendances|dict_get:student.id as attendance %}
+                      {% if attendance %}
+                          {% if attendance.status == '종료처리' %}
+                              <span class="text-secondary fw-bold">✔ 수업 종료</span>
+                          {% elif student.id in attendances %}
+                              <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
+                                      class="btn btn-outline-danger btn-xs"
+                                      title="취소">✖ <span class="btn-text">취소</span></button>
+
+                              <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')"
+                                      class="btn btn-outline-secondary btn-xs"
+                                      title="종료">⏹ <span class="btn-text">종료</span></button>
+
+                              <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다."
+                                 class="btn btn-outline-primary btn-xs"
+                                 title="문자">✉ <span class="btn-text">문자</span></a>
+                          {% endif %}
+                      {% else %}
+                          <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
+                                  class="btn btn-success btn-xs"
+                                  title="출석">✅ <span class="btn-text">출석</span></button>
+
+                          <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')"
+                                  class="btn btn-warning btn-xs"
+                                  title="지각">⏰ <span class="btn-text">지각</span></button>
+
+                          <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')"
+                                  class="btn btn-danger btn-xs"
+                                  title="결석">❌ <span class="btn-text">결석</span></button>
+
+                          <a href="{% url 'student_update' student.id %}"
+                             class="btn btn-outline-warning btn-xs"
+                             title="수정">✏️ <span class="btn-text">수정</span></a>
+                      {% endif %}
+                      {% endwith %}
+                    </div>
+                  </td>
                 </tr>
-                {% endfor %}
-                </tbody>
+              {% endfor %}
+              </tbody>
             </table>
-    </div>
+        </div>
         {% endfor %}
-    
 
-    
-
+    </div>
 </div>
+
 <script>
     alert("APP_JS_VERSION = 20260130_1827");
     console.log("✅ APP_JS_VERSION = 20260130_1827");
@@ -115,8 +238,6 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ended') {
-                
-                // ✅ "수업 종료" 메시지로 버튼 영역 교체
                 document.getElementById(rowId).innerHTML = `
                     <span class="text-secondary fw-bold">✔ 수업 종료</span>
                 `;
@@ -127,7 +248,6 @@
     }
 
     function selectPresentStudents() {
-        // 출석한 학생들의 checkbox를 모두 선택
         document.querySelectorAll('.student-checkbox').forEach(cb => {
             const row = cb.closest('tr');
             if (row && row.querySelector('.btn-outline-danger')) {
@@ -140,7 +260,6 @@
         });
     }
 
-
     function toggleDepartment(dept, source) {
         document.querySelectorAll(`.checkbox-${dept}`).forEach(cb => cb.checked = source.checked);
     }
@@ -152,7 +271,7 @@
                 'X-CSRFToken': '{{ csrf_token }}',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 status: status,
                 program_name: '{{ selected_school.program_name }}'
             })
@@ -161,7 +280,6 @@
         .then(data => {
 
             console.log("bridge check:", !!window.Android, window.Android);
-
             console.log("checkAttendance raw:", JSON.stringify(data));
             console.log("checkAttendance status:", data && data.status);
 
@@ -171,58 +289,49 @@
 
             if (data.status === 'success') {
 
-                // ✅ 앱(WebView)에서만 자동문자 실행
                 if (window.Android && typeof window.Android.sendSms === "function") {
                     const phone = data.phone;
                     const name = data.student;
                     const createdAt = data.created_at;
                     const msg = `${name}님 오늘 ${status} 처리되었습니다. (${createdAt})`;
-
                     console.log("📩 Android.sendSms 호출:", phone, msg);
                     window.Android.sendSms(phone, msg);
                 } else {
                     console.log("⚠️ Android 브릿지 없음(브라우저 접속이거나 브릿지 미연결)");
                 }
 
-
-                const program = data.program_name;
                 const phone = data.phone;
                 const name = data.student;
-                const createdAt = data.created_at;
                 const message = `${name}님 오늘 ${status} 처리되었습니다.`;
                 const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
 
-                const timeCell = document.getElementById(`time-cell-${studentId}`);
-                if (timeCell) {
-                    timeCell.innerText = createdAt;
-                }
-
-                // ✅ 버튼 영역 조건별로 나눔
                 if (status === '지각') {
                     document.getElementById(rowId).innerHTML = `
-                        <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="btn btn-success btn-sm">출석</button>
-                        <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="btn btn-danger btn-sm">결석</button>
-                        <a href="/attendance/student/update/${studentId}/" class="btn btn-sm btn-outline-warning ms-1">수정</a>
+                        <div class="cell-actions">
+                          <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="btn btn-success btn-xs">✅ <span class="btn-text">출석</span></button>
+                          <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="btn btn-danger btn-xs">❌ <span class="btn-text">결석</span></button>
+                          <a href="/attendance/student/update/${studentId}/" class="btn btn-outline-warning btn-xs">✏️ <span class="btn-text">수정</span></a>
+                        </div>
                     `;
                 } else {
                     document.getElementById(rowId).innerHTML = `
-                        <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="btn btn-outline-danger btn-sm ms-2">취소</button>
-                        <button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="btn btn-outline-secondary btn-sm ms-2">종료</button>
-                        <a href="${smsUrl}" class="btn btn-sm btn-outline-primary ms-2">문자 보내기</a>
+                        <div class="cell-actions">
+                          <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="btn btn-outline-danger btn-xs">✖ <span class="btn-text">취소</span></button>
+                          <button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="btn btn-outline-secondary btn-xs">⏹ <span class="btn-text">종료</span></button>
+                          <a href="${smsUrl}" class="btn btn-outline-primary btn-xs">✉ <span class="btn-text">문자</span></a>
+                        </div>
                     `;
                 }
             } else if (data.status === 'already_checked') {
                 alert("이미 출석 처리되었습니다.");
-            }
-            else {
-              alert("status=" + (data.status || "NONE") + "\n" + JSON.stringify(data));
+            } else {
+                alert("status=" + (data.status || "NONE") + "\n" + JSON.stringify(data));
             }
         })
         .catch(error => {
             console.error("❌ 오류 발생:", error);
         });
     }
-
 
     function cancelAttendance(studentId, rowId) {
         fetch(`/attendance/ajax/cancel/${studentId}/`, {
@@ -237,24 +346,18 @@
         .then(data => {
             if (data.status === 'canceled') {
                 document.getElementById(rowId).innerHTML = `
-                <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="btn btn-success btn-sm">출석</button>
-                <button onclick="checkAttendance(${studentId}, '지각', '${rowId}')" class="btn btn-warning btn-sm">지각</button>
-                <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="btn btn-danger btn-sm">결석</button>
-                <a href="/attendance/student/update/${studentId}/" class="btn btn-sm btn-outline-warning ms-1">수정</a>
+                  <div class="cell-actions">
+                    <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="btn btn-success btn-xs">✅ <span class="btn-text">출석</span></button>
+                    <button onclick="checkAttendance(${studentId}, '지각', '${rowId}')" class="btn btn-warning btn-xs">⏰ <span class="btn-text">지각</span></button>
+                    <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="btn btn-danger btn-xs">❌ <span class="btn-text">결석</span></button>
+                    <a href="/attendance/student/update/${studentId}/" class="btn btn-outline-warning btn-xs">✏️ <span class="btn-text">수정</span></a>
+                  </div>
                 `;
-
-                // ✅ 새로고침으로 화면 즉시 반영
-                //window.location.reload();
             }
         });
     }
 
-    // CSRF 토큰을 fetch 요청에 넣기 위함
     const csrfToken = '{{ csrf_token }}';
-
-    function toggleAll(source) {
-        document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = source.checked);
-    }
 
     function deleteSelectedStudents() {
         const selected = Array.from(document.querySelectorAll('.student-checkbox:checked'))
@@ -285,7 +388,7 @@
             }
         });
     }
-    
+
     function toggleRowSelection(row) {
         const checkbox = row.querySelector('.student-checkbox');
         if (!checkbox) return;
@@ -294,14 +397,11 @@
         row.classList.toggle('selected-row', checkbox.checked);
     }
 
-    // ✅ 체크박스 직접 클릭 시에도 스타일 유지되게 연결
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.student-checkbox').forEach(cb => {
             cb.addEventListener('change', function () {
                 const row = this.closest('tr');
-                if (row) {
-                    row.classList.toggle('selected-row', this.checked);
-                }
+                if (row) row.classList.toggle('selected-row', this.checked);
             });
         });
     });
