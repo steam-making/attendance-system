@@ -35,12 +35,16 @@ ALLOWED_HOSTS = [
     "146.56.108.153",
 ]
 
+# DB 경로는 기본값(로컬) + 환경변수(서버)로 오버라이드 가능하게
+SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", str(BASE_DIR / "db.sqlite3"))
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": SQLITE_DB_PATH,
     }
 }
+
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
