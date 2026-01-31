@@ -1,17 +1,38 @@
+# =========================
 # Python
+# =========================
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 
+# =========================
 # Django
+# =========================
 db.sqlite3
+db.sqlite3-journal
+db.sqlite3-wal
 
-# IDE
+staticfiles/
+media/
+
+*.log
+local_settings.py
+
+# =========================
+# Environment
+# =========================
+.env
+.env.*
+
+# =========================
+# Virtualenv
+# =========================
+.venv/
+venv/
+env/
+
+# =========================
+# IDE / OS
+# =========================
 .idea/
 .vscode/
-
-# Env
-.venv/
-env/
-venv/
+.DS_Store
