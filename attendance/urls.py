@@ -3,6 +3,8 @@ from . import views, views_api
 from .views import (
     upload_students_excel,
     delete_selected_students,
+    move_students,
+    end_class,
     select_school, register_school, update_school, delete_school
 )
 
@@ -41,6 +43,8 @@ urlpatterns = [
 
     path('students/delete_selected/', delete_selected_students, name='delete_selected_students'),
     path('students/upload/', upload_students_excel, name='upload_students_excel'),
+    path('students/move/', views.move_students, name='move_students'),
+    path('class/end/', views.end_class, name='end_class'),
 
     # =========================
     # ✅ 학교

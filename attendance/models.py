@@ -6,6 +6,28 @@ class School(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     program_name = models.CharField(max_length=100, help_text="운영 프로그램명 (예:로봇과학반)")
+
+    # 수업 요일 (콤마로 구분하여 저장: 월,화,수,목,금,토,일)
+    class_days = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="수업 요일을 선택하세요 (예: 월,화,수,목,금)"
+    )
+
+    # 부서 (콤마로 구분하여 저장: 1부,2부,3부,미수강)
+    departments = models.CharField(
+        max_length=30,
+        blank=True,
+        help_text="운영하는 부서를 선택하세요 (예: 1부,2부,3부)"
+    )
+
+    # 부서 시간 (JSON 형식으로 저장: {"1부": {"start": "09:00", "end": "12:00"}, ...})
+    department_times = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="각 부서별 수업 시간을 입력하세요"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -36,6 +58,7 @@ class Attendance(models.Model):
         ('출석', '출석'),
         ('지각', '지각'),
         ('결석', '결석'),
+        ('취소', '취소'),
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
@@ -46,3 +69,20 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.date}"
+
+class Setting(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    # SMS message templates
+    attendance_message = models.TextField(default="{student_name} 학생 출석하였습니다.", verbose_name="출석 시 문자 메시지")
+    lateness_message = models.TextField(default="{student_name} 학생 지각하였습니다.", verbose_name="지각 시 문자 메시지")
+    absence_message = models.TextField(default="{student_name} 학생 결석하였습니다.", verbose_name="결석 시 문자 메시지")
+    class_end_message = models.TextField(default="{student_name} 학생 수업 종료되었습니다.", verbose_name="종료 시 문자 메시지")
+
+    # Automation toggles
+    auto_send_class_end_sms = models.BooleanField(default=False, verbose_name="자동 종료 문자 보내기")
+    auto_send_lateness_sms = models.BooleanField(default=False, verbose_name="자동 지각 문자 보내기")
+
+    def __str__(self):
+        return f"{self.user.username}의 설정"
+
