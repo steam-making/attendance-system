@@ -1,230 +1,374 @@
 {% extends 'base.html' %}
 {% block extra_head %}
 <style>
-  tr.selected-row > td { background-color:#f8f8f8 !important; }
-
-  /* ✅ 테이블 */
-  .student-table{
-    width:100%;
-    table-layout: fixed; /* 고정 레이아웃 */
-    border-collapse: collapse;
+  /* Custom Table Styles for specific column widths */
+  .student-table {
+    table-layout: fixed;
   }
+  .col-check { width: 40px; }
+  .col-gbn { width: 30%; }
+  .col-name { width: 25%; }
+  .col-action { width: auto; }
 
-  /* ✅ 표 안 내용: 모두 가운데(가로/세로) */
-  .student-table th,
-  .student-table td{
-    text-align:center;
-    vertical-align:middle;
-    white-space:nowrap;          /* 줄바꿈 금지 */
-    padding: .5rem .5rem;        /* 기본 간격 통일 */
+  @media (max-width: 640px) {
+    .col-gbn { width: 25%; }
+    .col-name { width: 20%; }
+    .btn-text { display: none; }
   }
-
-  /* ✅ 헤더 글자는 잘리지 않게 */
-  .student-table th{
-    overflow: visible;
-    text-overflow: clip;
-    font-weight: 700;
-  }
-
-  /* ✅ 본문은 넘치면 ... */
-  .student-table td{
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* ✅ 체크칸(첫 열): table-cell 유지 + 체크박스만 가운데 정렬 */
-  th.col-check,
-  td.col-check{
-    padding: 0 !important;       /* 체크칸은 패딩 제거 */
-  }
-  th.col-check input,
-  td.col-check input{
-    display:block;               /* 가운데 정렬 확실 */
-    margin: 0 auto;              /* 가로 중앙 */
-  }
-
-  /* ✅ 버튼 영역: 가운데 정렬 + 한 줄 유지 */
-  .cell-actions{
-    display:flex;
-    justify-content:center;      /* ✅ 가운데 정렬로 변경 */
-    align-items:center;          /* ✅ 세로 중앙 */
-    gap:.25rem;
-    flex-wrap:nowrap;
-    min-width:0;
-  }
-
-  /* ✅ 버튼 XS */
-  .btn-xs{
-    padding: .18rem .38rem;
-    font-size: .75rem;
-    line-height: 1.15;
-    border-radius: .45rem;
-  }
-
-  /* ✅ 모바일: 텍스트 숨기고 아이콘만 */
-  @media (max-width: 768px){
-    .btn-text { display:none !important; }
-  }
-
-  /* ✅ colgroup 폭: 평소엔 균등(3칸), 좁아지면 체크칸만 줄어듦 */
-  /* 기본 체크칸 폭 */
-  col.col-check { width: 40px; }
-
-  /* 나머지 3칸은 균등 분배 */
-  col.col-gbn,
-  col.col-name,
-  col.col-action { width: calc((100% - 40px)/3); }
-
-  /* 화면이 더 좁아지면 체크칸만 더 줄이기 */
-  @media (max-width: 480px){
-    col.col-check { width: 28px; }
-    col.col-gbn,
-    col.col-name,
-    col.col-action { width: calc((100% - 28px)/3); }
-    .student-table th,
-    .student-table td{ padding: .45rem .35rem; }
+  
+  /* Selected row highlight */
+  tr.selected-row td {
+    background-color: #eff6ff !important; /* blue-50 */
   }
 </style>
-
 {% endblock %}
 
 {% block content %}
 {% load static %}
 {% load extra_filters %}
-<div class="container-fluid p-0 m-0">
 
-    <div class="d-flex justify-content-between align-items-center flex-wrap">
+<div class="max-w-5xl mx-auto space-y-6">
 
-        <!-- ✅ 학교 선택 드롭다운 -->
-        <form method="get" class="d-flex align-items-center">
-            <select name="school" onchange="this.form.submit()" class="form-select me-2">
-                {% for school in schools %}
-                    <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
-                        {{ school.name }} {{school.program_name}}
-                    </option>
-                {% endfor %}
-            </select>
+    {% if selected_school %}
+    <!-- Top Controls -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        
+        <!-- School Selector -->
+        <form method="get" class="w-full md:w-auto">
+            <div class="relative">
+                <select name="school" onchange="this.form.submit()" class="appearance-none block w-full pl-10 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm">
+                    {% for school in schools %}
+                        <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
+                            {{ school.name }} {{school.program_name}}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <i class="ph-bold ph-buildings"></i>
+                </div>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                    <i class="ph-bold ph-caret-down"></i>
+                </div>
+            </div>
         </form>
 
-        <!-- ✅ 오른쪽 버튼 그룹 (모바일 반응형 개선) -->
-        <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
-            <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectPresentStudents()">
-                출석모두선택
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap justify-center gap-2 w-full md:w-auto">
+            <button type="button" onclick="sendSmsToAll()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors">
+                <i class="ph-bold ph-paper-plane-tilt mr-1.5"></i>
+                전체문자보내기
             </button>
 
-            <a href="{% url 'student_create' %}?school={{ selected_school.id }}" class="btn btn-success btn-sm">
-                학생 등록
+            <button type="button" onclick="sendSmsToSelected()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="ph-bold ph-chat-circle-dots mr-1.5"></i>
+                선택문자보내기
+            </button>
+
+            <button type="button" onclick="moveSelectedStudents()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                <i class="ph-bold ph-arrows-counter-clockwise mr-1.5"></i>
+                이동
+            </button>
+ 
+             <button type="button" onclick="toggleModal('addStudentModal')" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                 <i class="ph-bold ph-user-plus mr-1.5"></i>
+                 학생 등록
+            </button>
+
+            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
+                <i class="ph-bold ph-file-xls mr-1.5"></i>
+                엑셀
             </a>
 
-            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="btn btn-warning btn-sm">
-                엑셀 업로드
-            </a>
-
-            <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedStudents()">
-                선택 삭제
+            <button type="button" onclick="deleteSelectedStudents()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                <i class="ph-bold ph-trash mr-1.5"></i>
+                삭제
             </button>
         </div>
-
     </div>
 
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
+        <div class="space-y-2">
+            {% for message in messages %}
+                <div class="rounded-md bg-blue-50 p-4 border border-blue-100">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="ph-fill ph-info text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-blue-800">{{ message }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 
-    <div style="flex: 0 0 auto;">
-
+    <!-- Departments Loop -->
+    <div class="space-y-8">
         {% for department, students in departments.items %}
-        <h4 class="mt-2">{{ department }} ({{ students|length }}명)</h4>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span class="w-2 h-6 bg-primary-500 rounded-full"></span>
+                    {{ department }}
+                    {% with department_time_labels|dict_get:department as dept_time %}
+                        {% if dept_time %}
+                            <span class="text-slate-500 text-sm font-normal">{{ dept_time }}</span>
+                        {% endif %}
+                    {% endwith %}
+                    <span class="text-slate-500 text-sm font-normal">({{ students|length }}명)</span>
+                </h4>
+                <div class="flex items-center">
+                    <button type="button" onclick="endClassForDepartment('{{ department }}')" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors mr-4">
+                        <i class="ph-bold ph-door-open mr-1"></i>
+                        수업종료
+                    </button>
+                    <input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)" class="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-600 cursor-pointer">
+                    <label for="select-all-{{ department }}" class="ml-2 text-sm text-slate-600 cursor-pointer select-none">전체선택</label>
+                </div>
+            </div>
 
-        <div style="flex: 0 0 auto;">
-            <table class="table text-center m-0 student-table" style="min-width:0;">
-              <colgroup>
-                <col class="col-check">
-                <col class="col-gbn">
-                <col class="col-name">
-                <col class="col-action">
-              </colgroup>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 student-table">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider col-check">
+                                <span class="sr-only">선택</span>
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider col-gbn">
+                                학년/반/번호
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider col-name">
+                                이름
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider col-action">
+                                출석체크
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                    {% for student in students %}
+                        <tr onclick="toggleRowSelection(this)" data-phone="{{ student.phone }}" class="hover:bg-slate-50 transition-colors cursor-pointer group">
+                            <td class="px-3 py-4 whitespace-nowrap text-center col-check">
+                                <div class="flex justify-center">
+                                    <input type="checkbox" class="student-checkbox checkbox-{{ department }} h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-600 cursor-pointer" value="{{ student.id }}" onclick="event.stopPropagation()">
+                                </div>
+                            </td>
 
-              <thead class="{{ color_map_header|dict_get:department }}">
-                <tr>
-                  <th class="col-check">
-                    <input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)">
-                  </th>
-                  <th class="col-gbn">학년/반/번호</th>
-                  <th class="col-name">이름</th>
-                  <th>체크</th>
-                </tr>
-              </thead>
+                            <td class="px-3 py-4 whitespace-nowrap text-center text-sm font-medium text-slate-600 col-gbn">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                    {{ student.grade }}-{{ student.classroom }}-{{ student.number|stringformat:"02d" }}
+                                </span>
+                            </td>
 
-              <tbody>
-              {% for student in students %}
-                <tr onclick="toggleRowSelection(this)">
-                  <td class="col-check">
-                    <input type="checkbox" class="student-checkbox checkbox-{{ department }}" value="{{ student.id }}">
-                  </td>
+                            <td class="px-3 py-4 whitespace-nowrap text-center text-sm font-bold text-slate-900 col-name">
+                                {{ student.name }}
+                            </td>
 
-                  <td class="col-gbn">
-                    {{ student.grade }}{{ student.classroom }}{{ student.number|stringformat:"02d" }}
-                  </td>
+                            <td id="attendance-cell-{{ student.id }}" class="px-3 py-4 whitespace-nowrap text-center col-action" onclick="event.stopPropagation()">
+                                <div class="flex justify-center items-center gap-1">
+                                    {% with attendances|dict_get:student.id as attendance %}
+                                    {% if attendance %}
+                                        {% if attendance.status == '종료처리' %}
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                                                <i class="ph-fill ph-check-circle"></i> 수업 종료
+                                            </span>
+                                        {% elif student.id in attendances %}
+                                            <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
+                                                    class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors"
+                                                    title="취소">
+                                                <i class="ph-bold ph-x"></i>
+                                                <span class="btn-text ml-1 text-xs">취소</span>
+                                            </button>
 
-                  <td class="col-name">
-                    {{ student.name }}
-                  </td>
+                                            <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')"
+                                                    class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
+                                                    title="종료">
+                                                <i class="ph-bold ph-stop"></i>
+                                                <span class="btn-text ml-1 text-xs">종료</span>
+                                            </button>
 
-                  <td id="attendance-cell-{{ student.id }}">
-                    <div class="cell-actions">
-                      {% with attendances|dict_get:student.id as attendance %}
-                      {% if attendance %}
-                          {% if attendance.status == '종료처리' %}
-                              <span class="text-secondary fw-bold">✔ 수업 종료</span>
-                          {% elif student.id in attendances %}
-                              <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
-                                      class="btn btn-outline-danger btn-xs"
-                                      title="취소">✖ <span class="btn-text">취소</span></button>
+                                            <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다."
+                                               class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors"
+                                               title="문자">
+                                                <i class="ph-bold ph-chat-circle-text"></i>
+                                                <span class="btn-text ml-1 text-xs">문자</span>
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
+                                                class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm"
+                                                title="출석">
+                                            <i class="ph-bold ph-check"></i>
+                                            <span class="btn-text ml-1 text-xs">출석</span>
+                                        </button>
 
-                              <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')"
-                                      class="btn btn-outline-secondary btn-xs"
-                                      title="종료">⏹ <span class="btn-text">종료</span></button>
+                                        <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')"
+                                                class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-yellow-500 transition-colors shadow-sm"
+                                                title="지각">
+                                            <i class="ph-bold ph-clock"></i>
+                                            <span class="btn-text ml-1 text-xs">지각</span>
+                                        </button>
 
-                              <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다."
-                                 class="btn btn-outline-primary btn-xs"
-                                 title="문자">✉ <span class="btn-text">문자</span></a>
-                          {% endif %}
-                      {% else %}
-                          <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
-                                  class="btn btn-success btn-xs"
-                                  title="출석">✅ <span class="btn-text">출석</span></button>
+                                        <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')"
+                                                class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm"
+                                                title="결석">
+                                            <i class="ph-bold ph-x"></i>
+                                            <span class="btn-text ml-1 text-xs">결석</span>
+                                        </button>
 
-                          <button onclick="checkAttendance({{ student.id }}, '지각', 'attendance-cell-{{ student.id }}')"
-                                  class="btn btn-warning btn-xs"
-                                  title="지각">⏰ <span class="btn-text">지각</span></button>
-
-                          <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')"
-                                  class="btn btn-danger btn-xs"
-                                  title="결석">❌ <span class="btn-text">결석</span></button>
-
-                          <a href="{% url 'student_update' student.id %}"
-                             class="btn btn-outline-warning btn-xs"
-                             title="수정">✏️ <span class="btn-text">수정</span></a>
-                      {% endif %}
-                      {% endwith %}
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
+                                        <a href="{% url 'student_update' student.id %}"
+                                           class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
+                                           title="수정">
+                                            <i class="ph-bold ph-pencil-simple"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
         {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center bg-white p-10 rounded-xl shadow-sm border border-slate-100">
+        <i class="ph-bold ph-info text-5xl text-slate-400"></i>
+        <h3 class="mt-4 text-lg font-medium text-slate-800">
+            {% if schools %}
+                학교를 선택해주세요.
+            {% else %}
+                등록된 학교가 없습니다.
+            {% endif %}
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+            {% if schools %}
+                상단의 드롭다운 메뉴에서 학교를 선택하여 출석부를 확인하세요.
+            {% else %}
+                먼저 학교를 등록해야 출석부 기능을 사용할 수 있습니다.
+            {% endif %}
+        </p>
+        {% if not schools %}
+        <div class="mt-6">
+            <a href="{% url 'register_school' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <i class="ph-bold ph-plus-circle mr-2"></i>
+                새 학교 등록하기
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
 
+<!-- Tailwind Modal -->
+<div id="addStudentModal" class="relative z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-sm"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="ph-bold ph-user-plus text-green-600 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900" id="modal-title">학생 등록</h3>
+                            <div class="mt-4">
+                                <form id="addStudentForm" class="space-y-4">
+                                    {% csrf_token %}
+                                    <div>
+                                        <label for="department" class="block text-sm font-medium leading-6 text-slate-900">부서</label>
+                                        <select id="department" name="department" required class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                            <option value="1부">1부</option>
+                                            <option value="2부">2부</option>
+                                            <option value="3부">3부</option>
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="grade" class="block text-sm font-medium leading-6 text-slate-900">학년</label>
+                                            <input type="number" id="grade" name="grade" required class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3">
+                                        </div>
+                                        <div>
+                                            <label for="classroom" class="block text-sm font-medium leading-6 text-slate-900">반</label>
+                                            <input type="number" id="classroom" name="classroom" required class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3">
+                                        </div>
+                                        <div>
+                                            <label for="number" class="block text-sm font-medium leading-6 text-slate-900">번호</label>
+                                            <input type="number" id="number" name="number" required class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="name" class="block text-sm font-medium leading-6 text-slate-900">이름</label>
+                                        <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3">
+                                    </div>
+                                    <div>
+                                        <label for="phone" class="block text-sm font-medium leading-6 text-slate-900">휴대폰 번호</label>
+                                        <input type="text" id="phone" name="phone" required class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3">
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button type="button" onclick="addStudent()" class="inline-flex w-full justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 sm:ml-3 sm:w-auto">등록</button>
+                    <button type="button" onclick="toggleModal('addStudentModal')" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Student Modal -->
+<div id="moveStudentModal" class="relative z-50 hidden" aria-labelledby="modal-title-move" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-sm"></div>
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="ph-bold ph-arrows-counter-clockwise text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900" id="modal-title-move">학생 이동</h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-slate-600 mb-4">
+                                    <span id="moveStudentCount"></span>명의 학생을 이동할 부서를 선택하세요.
+                                </p>
+                                <select id="targetDepartment" name="target_department" class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    {% for dept in department_options %}
+                                        <option value="{{ dept }}">{{ dept }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button type="button" onclick="executeMoveStudents()" class="inline-flex w-full justify-center rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 sm:ml-3 sm:w-auto">이동</button>
+                    <button type="button" onclick="toggleModal('moveStudentModal')" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto">취소</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    alert("APP_JS_VERSION = 20260130_1827");
-    console.log("✅ APP_JS_VERSION = 20260130_1827");
+    // Modal Toggle Function
+    function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
 
     function endAttendance(studentId, rowId, name, phone) {
         fetch(`/attendance/ajax/end/${studentId}/`, {
@@ -239,7 +383,9 @@
         .then(data => {
             if (data.status === 'ended') {
                 document.getElementById(rowId).innerHTML = `
-                    <span class="text-secondary fw-bold">✔ 수업 종료</span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                        <i class="ph-fill ph-check-circle"></i> 수업 종료
+                    </span>
                 `;
             } else {
                 alert('출석 정보가 없습니다.');
@@ -250,18 +396,30 @@
     function selectPresentStudents() {
         document.querySelectorAll('.student-checkbox').forEach(cb => {
             const row = cb.closest('tr');
-            if (row && row.querySelector('.btn-outline-danger')) {
+            // Check if the row has a cancel button (meaning attendance is checked)
+            // In new design, cancel button has 'ph-x' icon inside a button with border-red-200
+            if (row && row.querySelector('button[title="취소"]')) {
                 cb.checked = true;
                 row.classList.add('selected-row');
+                row.querySelector('td').classList.add('bg-blue-50'); // Add highlight
             } else {
                 cb.checked = false;
                 row.classList.remove('selected-row');
+                row.querySelector('td').classList.remove('bg-blue-50');
             }
         });
     }
 
     function toggleDepartment(dept, source) {
-        document.querySelectorAll(`.checkbox-${dept}`).forEach(cb => cb.checked = source.checked);
+        document.querySelectorAll(`.checkbox-${dept}`).forEach(cb => {
+            cb.checked = source.checked;
+            const row = cb.closest('tr');
+            if(source.checked) {
+                row.classList.add('selected-row');
+            } else {
+                row.classList.remove('selected-row');
+            }
+        });
     }
 
     function checkAttendance(studentId, status, rowId) {
@@ -278,26 +436,14 @@
         })
         .then(response => response.json())
         .then(data => {
-
-            console.log("bridge check:", !!window.Android, window.Android);
-            console.log("checkAttendance raw:", JSON.stringify(data));
-            console.log("checkAttendance status:", data && data.status);
-
-            if (!data || !data.status) {
-              console.log("❌ data/status 없음", data);
-            }
-
             if (data.status === 'success') {
-
+                // SMS Logic (Android Bridge) - Preserved
                 if (window.Android && typeof window.Android.sendSms === "function") {
                     const phone = data.phone;
                     const name = data.student;
                     const createdAt = data.created_at;
                     const msg = `${name}님 오늘 ${status} 처리되었습니다. (${createdAt})`;
-                    console.log("📩 Android.sendSms 호출:", phone, msg);
                     window.Android.sendSms(phone, msg);
-                } else {
-                    console.log("⚠️ Android 브릿지 없음(브라우저 접속이거나 브릿지 미연결)");
                 }
 
                 const phone = data.phone;
@@ -305,27 +451,29 @@
                 const message = `${name}님 오늘 ${status} 처리되었습니다.`;
                 const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
 
+                // Update UI based on status
+                // Using the new Tailwind button styles
                 if (status === '지각') {
                     document.getElementById(rowId).innerHTML = `
-                        <div class="cell-actions">
-                          <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="btn btn-success btn-xs">✅ <span class="btn-text">출석</span></button>
-                          <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="btn btn-danger btn-xs">❌ <span class="btn-text">결석</span></button>
-                          <a href="/attendance/student/update/${studentId}/" class="btn btn-outline-warning btn-xs">✏️ <span class="btn-text">수정</span></a>
+                        <div class="flex justify-center items-center gap-1">
+                          <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm" title="출석"><i class="ph-bold ph-check"></i><span class="btn-text ml-1 text-xs">출석</span></button>
+                          <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm" title="결석"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">결석</span></button>
+                          <a href="/attendance/student/update/${studentId}/" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="수정"><i class="ph-bold ph-pencil-simple"></i></a>
                         </div>
                     `;
                 } else {
                     document.getElementById(rowId).innerHTML = `
-                        <div class="cell-actions">
-                          <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="btn btn-outline-danger btn-xs">✖ <span class="btn-text">취소</span></button>
-                          <button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="btn btn-outline-secondary btn-xs">⏹ <span class="btn-text">종료</span></button>
-                          <a href="${smsUrl}" class="btn btn-outline-primary btn-xs">✉ <span class="btn-text">문자</span></a>
+                        <div class="flex justify-center items-center gap-1">
+                          <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors" title="취소"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">취소</span></button>
+                          <button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="종료"><i class="ph-bold ph-stop"></i><span class="btn-text ml-1 text-xs">종료</span></button>
+                          <a href="${smsUrl}" class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors" title="문자"><i class="ph-bold ph-chat-circle-text"></i><span class="btn-text ml-1 text-xs">문자</span></a>
                         </div>
                     `;
                 }
             } else if (data.status === 'already_checked') {
                 alert("이미 출석 처리되었습니다.");
             } else {
-                alert("status=" + (data.status || "NONE") + "\n" + JSON.stringify(data));
+                alert("오류가 발생했습니다.");
             }
         })
         .catch(error => {
@@ -346,18 +494,27 @@
         .then(data => {
             if (data.status === 'canceled') {
                 document.getElementById(rowId).innerHTML = `
-                  <div class="cell-actions">
-                    <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="btn btn-success btn-xs">✅ <span class="btn-text">출석</span></button>
-                    <button onclick="checkAttendance(${studentId}, '지각', '${rowId}')" class="btn btn-warning btn-xs">⏰ <span class="btn-text">지각</span></button>
-                    <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="btn btn-danger btn-xs">❌ <span class="btn-text">결석</span></button>
-                    <a href="/attendance/student/update/${studentId}/" class="btn btn-outline-warning btn-xs">✏️ <span class="btn-text">수정</span></a>
+                  <div class="flex justify-center items-center gap-1">
+                    <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm" title="출석"><i class="ph-bold ph-check"></i><span class="btn-text ml-1 text-xs">출석</span></button>
+                    <button onclick="checkAttendance(${studentId}, '지각', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-yellow-500 transition-colors shadow-sm" title="지각"><i class="ph-bold ph-clock"></i><span class="btn-text ml-1 text-xs">지각</span></button>
+                    <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm" title="결석"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">결석</span></button>
+                    <a href="/attendance/student/update/${studentId}/" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="수정"><i class="ph-bold ph-pencil-simple"></i></a>
                   </div>
                 `;
             }
         });
     }
 
-    const csrfToken = '{{ csrf_token }}';
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+
+    const csrfToken = getCookie('csrftoken');
 
     function deleteSelectedStudents() {
         const selected = Array.from(document.querySelectorAll('.student-checkbox:checked'))
@@ -394,16 +551,183 @@
         if (!checkbox) return;
 
         checkbox.checked = !checkbox.checked;
-        row.classList.toggle('selected-row', checkbox.checked);
+        if (checkbox.checked) {
+            row.classList.add('selected-row');
+        } else {
+            row.classList.remove('selected-row');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.student-checkbox').forEach(cb => {
             cb.addEventListener('change', function () {
                 const row = this.closest('tr');
-                if (row) row.classList.toggle('selected-row', this.checked);
+                if (row) {
+                    if (this.checked) {
+                        row.classList.add('selected-row');
+                    } else {
+                        row.classList.remove('selected-row');
+                    }
+                }
             });
         });
     });
+
+    function addStudent() {
+        const formData = {
+            department: document.getElementById('department').value,
+            grade: document.getElementById('grade').value,
+            classroom: document.getElementById('classroom').value,
+            number: document.getElementById('number').value,
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value
+        };
+
+        fetch("{% url 'student_create' %}?school={{ selected_school.id }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else if (data.status === 'error') {
+                if (data.errors) {
+                    let errorMessages = [];
+                    for (const [field, message] of Object.entries(data.errors)) {
+                        errorMessages.push(`${field}: ${message}`);
+                    }
+                    alert('등록 실패:\n' + errorMessages.join('\n'));
+                } else {
+                    alert(data.message || '학생 등록에 실패했습니다.');
+                }
+            } else {
+                alert('알 수 없는 오류가 발생했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('오류가 발생했습니다.');
+        });
+    }
+
+    let studentsToMove = [];
+
+    function moveSelectedStudents() {
+        studentsToMove = Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value);
+        
+        if (studentsToMove.length === 0) {
+            alert('이동할 학생을 선택하세요.');
+            return;
+        }
+
+        document.getElementById('moveStudentCount').textContent = studentsToMove.length;
+        toggleModal('moveStudentModal');
+    }
+
+    function executeMoveStudents() {
+        const targetDepartment = document.getElementById('targetDepartment').value;
+        if (!targetDepartment) {
+            alert('이동할 부서를 선택하세요.');
+            return;
+        }
+
+        fetch("{% url 'move_students' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                student_ids: studentsToMove,
+                target_department: targetDepartment
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('오류: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('학생 이동 중 오류가 발생했습니다.');
+        });
+    }
+
+    function sendSmsToSelected() {
+        const selectedRows = document.querySelectorAll('.student-checkbox:checked');
+        if (selectedRows.length === 0) {
+            alert('문자를 보낼 학생을 선택하세요.');
+            return;
+        }
+        const phoneNumbers = Array.from(selectedRows).map(cb => cb.closest('tr').dataset.phone).filter(Boolean);
+        if (phoneNumbers.length === 0) {
+            alert('선택된 학생들의 전화번호 정보가 없습니다.');
+            return;
+        }
+        window.location.href = `sms:${phoneNumbers.join(',')}`;
+    }
+
+    function sendSmsToAll() {
+        const allStudentRows = document.querySelectorAll('tr[data-phone]');
+        if (allStudentRows.length === 0) {
+            alert('문자를 보낼 학생이 없습니다.');
+            return;
+        }
+        const phoneNumbers = Array.from(allStudentRows).map(row => row.dataset.phone).filter(Boolean);
+        if (phoneNumbers.length === 0) {
+            alert('학생들의 전화번호 정보가 없습니다.');
+            return;
+        }
+        window.location.href = `sms:${phoneNumbers.join(',')}`;
+    }
+
+    function endClassForDepartment(departmentName) {
+        if (!confirm(`정말 ${departmentName} 수업을 종료하시겠습니까?\n설정에 따라 출석한 학생들에게 종료 문자가 발송될 수 있습니다.`)) {
+            return;
+        }
+
+        const schoolId = '{{ selected_school.id }}';
+
+        fetch("{% url 'end_class' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                department_name: departmentName,
+                school_id: schoolId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message); 
+
+            if (data.status === 'success') {
+                if (data.sms_uri) {
+                    setTimeout(() => {
+                        window.location.href = data.sms_uri;
+                    }, 100);
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('수업 종료 중 오류가 발생했습니다.');
+        });
+    }
 </script>
 {% endblock %}
