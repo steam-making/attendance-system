@@ -175,3 +175,12 @@ LOGIN_REDIRECT_URL = '/attendance/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'  # 로그아웃 후 로그인 페이지로 이동
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# ✅ DRF Browsable API 활성화 + JSON 함께 사용
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.BrowsableAPIRenderer",
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "JSON_INDENT": 2,  # (선택) json 보기 좋게 들여쓰기
+}
