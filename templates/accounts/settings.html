@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}설정 - 출결관리{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">설정</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="space-y-8">
+            <!-- SMS Message Settings -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">SMS 문자 메시지 설정</h3>
+                    <div class="mt-6 space-y-6">
+                        <div>
+                            <label for="{{ form.attendance_message.id_for_label }}" class="block text-sm font-medium text-gray-700">출석 시 문자 메시지</label>
+                            {{ form.attendance_message }}
+                            <p class="mt-2 text-sm text-gray-500">{student_name} 변수를 사용하여 학생 이름을 포함할 수 있습니다.</p>
+                        </div>
+                        <div>
+                            <label for="{{ form.lateness_message.id_for_label }}" class="block text-sm font-medium text-gray-700">지각 시 문자 메시지</label>
+                            {{ form.lateness_message }}
+                        </div>
+                        <div>
+                            <label for="{{ form.absence_message.id_for_label }}" class="block text-sm font-medium text-gray-700">결석 시 문자 메시지</label>
+                            {{ form.absence_message }}
+                        </div>
+                        <div>
+                            <label for="{{ form.class_end_message.id_for_label }}" class="block text-sm font-medium text-gray-700">종료 시 문자 메시지</label>
+                            {{ form.class_end_message }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automation Settings -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">자동화 설정</h3>
+                    <div class="mt-6 space-y-6">
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.auto_send_lateness_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.auto_send_lateness_sms.id_for_label }}" class="font-medium text-gray-700">자동 지각 문자 보내기</label>
+                                <p class="text-gray-500">학생이 지각으로 처리될 때 자동으로 문자를 보냅니다.</p>
+                            </div>
+                        </div>
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.auto_send_class_end_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.auto_send_class_end_sms.id_for_label }}" class="font-medium text-gray-700">자동 종료 문자 보내기</label>
+                                <p class="text-gray-500">'수업종료' 버튼을 눌렀을 때 출석한 학생들에게 자동으로 문자를 보냅니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-5">
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    저장하기
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
