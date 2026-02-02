@@ -8,6 +8,8 @@ from .forms import UserUpdateForm, CustomPasswordChangeForm
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.contrib.auth.views import LoginView
+from attendance.models import Setting
+from attendance.forms import SettingsForm
 
 User = get_user_model()
 
@@ -74,3 +76,18 @@ def change_password(request):
         form = CustomPasswordChangeForm(user=request.user)
 
     return render(request, 'accounts/change_password.html', {'form': form})
+
+@login_required
+def settings_view(request):
+    settings, created = Setting.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        form = SettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "설정이 성공적으로 저장되었습니다.")
+            return redirect('settings')
+    else:
+        form = SettingsForm(instance=settings)
+
+    return render(request, 'accounts/settings.html', {'form': form})
