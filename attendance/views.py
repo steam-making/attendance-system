@@ -1,9 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Student, Attendance
+from .models import Student, Attendance, Setting, Setting
 from django.utils import timezone
 from django.contrib import messages
 from .forms import StudentForm
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed
 import openpyxl
 from collections import defaultdict, OrderedDict
@@ -218,7 +219,7 @@ def ajax_attendance_cancel(request, student_id):
     if request.method == 'POST':
         student = get_object_or_404(Student, id=student_id)
         today = timezone.now().date()
-        Attendance.objects.filter(student=student, date=today).delete()
+        Attendance.objects.filter(student=student, date=today).update(status='취소')
         return JsonResponse({'status': 'canceled', 'student': student.name})
     return JsonResponse({'status': 'invalid'})
 
@@ -230,47 +231,39 @@ from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def ajax_attendance_check(request, student_id):
     student = get_object_or_404(Student, id=student_id)
-    today = timezone.localdate()  # ✅ timezone.now().date() 대신 localdate 권장
+    today = timezone.localdate()
 
     if request.method == 'POST':
-        import json
         data = json.loads(request.body or "{}")
-        print("📦 받은 데이터:", data)
-
-        status = data.get('status', '출석')  # 기본값은 '출석'
+        status = data.get('status', '출석')
         program = data.get('program_name')
 
-        print(f"✅ 상태: {status}, 프로그램명: {program}")
-
-        # ✅ 중복 확인
         already_checked = Attendance.objects.filter(student=student, date=today).exists()
-        print(f"✅ 중복확인 : {already_checked}")
-
-        # ✅ 문자 내용(서버에서 생성)
-        # 필요하면 문구 템플릿만 바꾸면 됨
-        # program이 None일 수 있으니 안전처리
-        program_txt = program or "-"
-        time_txt = timezone.localtime().strftime('%H:%M')
-        sms_message = f"[메듀테크] {student.name} 학생 출석 완료 ({program_txt} / {time_txt})"
-
         if already_checked:
-            return JsonResponse({
-                'status': 'already_checked',
-                'student': student.name,
-                'phone': student.phone,
-                'attendance_status': status,
-                'program_name': program,
-                'send_sms': False,          # ✅ 중복이면 발송 금지
-                'sms_message': sms_message  # (옵션) 표시/로그용
-            })
+            return JsonResponse({'status': 'already_checked'})
+
+        user = student.school.user
+        settings, created = Setting.objects.get_or_create(user=user)
+
+        send_sms = False
+        sms_message = ""
+
+        if status == '출석':
+            sms_message = settings.attendance_message.replace('{student_name}', student.name)
+            send_sms = True
+        elif status == '지각' and settings.auto_send_lateness_sms:
+            sms_message = settings.lateness_message.replace('{student_name}', student.name)
+            send_sms = True
+        elif status == '결석':
+            sms_message = settings.absence_message.replace('{student_name}', student.name)
+            send_sms = True
 
         attendance = Attendance.objects.create(
             student=student,
             status=status,
             program=program,
-            date=today  # ✅ 모델에 date 필드가 있으면 명시 (없으면 제거)
+            date=today
         )
-        print(f"✅ 오브젝트추가 : {attendance}")
 
         created_time = timezone.localtime(attendance.created_at).strftime('%H:%M:%S')
 
@@ -281,8 +274,8 @@ def ajax_attendance_check(request, student_id):
             'attendance_status': status,
             'program_name': program,
             'created_at': created_time,
-            'send_sms': True,             # ✅ 성공 + 최초 처리만 True
-            'sms_message': sms_message    # ✅ Android로 보낼 최종 메시지
+            'send_sms': send_sms,
+            'sms_message': sms_message
         })
 
     return JsonResponse({'status': 'invalid_method'})
@@ -307,16 +300,54 @@ def student_update(request, pk):
         })
 
 def student_create(request):
-    school_id = request.GET.get('school')  # ✅ URL에서 school ID 가져오기
+    school_id = request.GET.get('school')
     selected_school = School.objects.filter(id=school_id, user=request.user).first()
 
+    if not selected_school:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': '학교를 찾을 수 없습니다.'}, status=400)
+        return redirect('select_school')
+
     if request.method == 'POST':
-        form = StudentForm(request.POST)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            import json
+            from django.http import QueryDict
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+
+            post_data = QueryDict('', mutable=True)
+            for key, value in data.items():
+                post_data[key] = value
+            form = StudentForm(post_data)
+        else:
+            form = StudentForm(request.POST)
+
         if form.is_valid():
             student = form.save(commit=False)
-            student.school = selected_school  # ✅ 자동으로 학교 지정
+            student.school = selected_school
             student.save()
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'success',
+                    'student': {
+                        'id': student.id,
+                        'name': student.name,
+                        'department': student.department,
+                        'grade': student.grade,
+                        'classroom': student.classroom,
+                        'number': student.number,
+                        'phone': student.phone
+                    }
+                })
+
             return redirect(f'/attendance/?school={selected_school.id}')
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: errors[0] for field, errors in form.errors.items()}
+                return JsonResponse({'status': 'error', 'errors': errors}, status=400)
     else:
         form = StudentForm()
 
@@ -347,6 +378,15 @@ def attendance_list(request):
     else:
         selected_school = schools.first()
 
+    if selected_school and selected_school.departments:
+        department_options = [
+            dept.strip()
+            for dept in selected_school.departments.split(',')
+            if dept.strip()
+        ]
+    else:
+        department_options = ["1부", "2부", "3부"]
+
     # ✅ 선택된 학교에 해당하는 학생만 조회
     students = Student.objects.filter(school=selected_school) if selected_school else []
 
@@ -375,17 +415,28 @@ def attendance_list(request):
             key=lambda s: (s.grade, s.classroom, s.number)
         )
 
-    # ✅ 부서 출력 순서 고정
+    department_time_labels = {}
+    if selected_school and selected_school.department_times:
+        for dept, time_info in selected_school.department_times.items():
+            if not time_info:
+                continue
+            start_time = time_info.get("start")
+            end_time = time_info.get("end")
+            if start_time and end_time:
+                department_time_labels[dept] = f"{start_time}~{end_time}"
+
+    # ✅ 부서 출력 순서 고정 (선택된 학교의 부서를 기준으로 표시)
     ordered_departments = OrderedDict()
-    for dept in ["1부", "2부", "3부"]:
-        if dept in department_groups:
-            ordered_departments[dept] = department_groups[dept]
+    for dept in department_options:
+        ordered_departments[dept] = department_groups.get(dept, [])
 
     return render(request, "attendance/attendance_list.html", {
         "departments": ordered_departments,
         "attendances": attendances,
         "schools": schools,
         "selected_school": selected_school,
+        "department_options": department_options,
+        "department_time_labels": department_time_labels,
         "color_map_header": color_map_header,
     })
 
@@ -401,3 +452,78 @@ def attendance_check(request, student_id):
     else:
         messages.warning(request, f"{student.name}님은 이미 출석했습니다.")
     return redirect('attendance_list')
+
+
+@login_required
+@require_POST
+def move_students(request):
+    try:
+        data = json.loads(request.body)
+        student_ids = data.get('student_ids', [])
+        target_department = data.get('target_department')
+
+        if not student_ids or not target_department:
+            return JsonResponse({'status': 'error', 'message': '필수 정보가 누락되었습니다.'}, status=400)
+
+        # Ensure the user is only moving students within their own schools
+        students_to_move = Student.objects.filter(id__in=student_ids, school__user=request.user)
+        
+        if len(student_ids) != students_to_move.count():
+            return JsonResponse({'status': 'error', 'message': '권한이 없거나 존재하지 않는 학생이 포함되어 있습니다.'}, status=403)
+
+        updated_count = students_to_move.update(department=target_department)
+
+        return JsonResponse({'status': 'success', 'message': f'{updated_count}명의 학생이 {target_department}로 이동되었습니다.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required
+@require_POST
+def end_class(request):
+    try:
+        data = json.loads(request.body)
+        department_name = data.get('department_name')
+        school_id = data.get('school_id')
+        today = timezone.now().date()
+
+        if not department_name or not school_id:
+            return JsonResponse({'status': 'error', 'message': '필수 정보가 누락되었습니다.'}, status=400)
+
+        try:
+            user_settings = Setting.objects.get(user=request.user)
+        except Setting.DoesNotExist:
+            user_settings = Setting(user=request.user)
+
+        attendances_to_end = Attendance.objects.filter(
+            student__school_id=school_id,
+            student__department=department_name,
+            date=today,
+            status='출석'
+        )
+
+        if not attendances_to_end.exists():
+            return JsonResponse({'status': 'info', 'message': '수업을 종료할 출석 상태의 학생이 없습니다.'})
+
+        student_count = attendances_to_end.count()
+        phone_numbers = [att.student.phone for att in attendances_to_end if att.student.phone]
+
+        attendances_to_end.update(status='종료처리')
+
+        sms_uri = None
+        if user_settings.auto_send_class_end_sms and phone_numbers:
+            message = user_settings.class_end_message.replace('{student_name}', '').strip()
+            sms_uri = f"sms:{','.join(phone_numbers)}?body={message}"
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{department_name} 수업이 종료되었습니다. ({student_count}명 처리)',
+            'sms_uri': sms_uri
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
