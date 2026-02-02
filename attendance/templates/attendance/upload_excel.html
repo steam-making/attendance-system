@@ -1,19 +1,50 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-5">
-    <h3>학생 엑셀 등록 ({{ selected_school.name }})</h3>
+<div class="max-w-2xl mx-auto py-12">
+    <div class="bg-white shadow-sm ring-1 ring-slate-900/5 sm:rounded-xl">
+        <div class="px-4 py-6 sm:p-8">
+            <div class="text-center mb-8">
+                <div class="mx-auto h-12 w-12 text-green-600 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="ph-bold ph-file-xls text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold leading-7 text-slate-900 sm:truncate sm:text-3xl sm:tracking-tight">학생 엑셀 등록</h1>
+                <p class="mt-2 text-sm text-slate-500">{{ selected_school.name }}에 학생을 일괄 등록합니다.</p>
+            </div>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label class="form-label">엑셀 파일 업로드 (.xlsx)</label>
-            <input type="file" name="file" accept=".xlsx" required class="form-control">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="col-span-full">
+                    <label for="file-upload" class="block text-sm font-medium leading-6 text-slate-900">엑셀 파일 업로드 (.xlsx)</label>
+                    <div class="mt-2 flex justify-center rounded-lg border border-dashed border-slate-900/25 px-6 py-10 hover:bg-slate-50 transition-colors">
+                        <div class="text-center">
+                            <i class="ph-duotone ph-file-arrow-up text-4xl text-slate-300 mx-auto mb-4"></i>
+                            <div class="mt-4 flex text-sm leading-6 text-slate-600 justify-center">
+                                <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500">
+                                    <span>파일 선택</span>
+                                    <input id="file-upload" name="file" type="file" accept=".xlsx" required class="sr-only" onchange="document.getElementById('file-name').textContent = this.files[0].name">
+                                </label>
+                                <p class="pl-1">또는 드래그 앤 드롭</p>
+                            </div>
+                            <p class="text-xs leading-5 text-slate-600">XLSX 파일만 가능합니다.</p>
+                            <p id="file-name" class="mt-2 text-sm font-medium text-primary-600"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="flex w-full justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">
+                        등록하기
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center">
+                <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="text-sm font-semibold leading-6 text-slate-600 hover:text-slate-900">
+                    ← 출석 목록으로 돌아가기
+                </a>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">등록하기</button>
-    </form>
-
-    <div class="mt-4">
-        <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="btn btn-secondary">← 출석 목록으로 돌아가기</a>
     </div>
 </div>
 {% endblock %}
