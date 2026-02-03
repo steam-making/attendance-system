@@ -107,24 +107,24 @@
     <div class="space-y-8">
         {% for department, students in departments.items %}
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-nowrap justify-between items-center gap-4 overflow-x-auto">
+                <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2 whitespace-nowrap shrink-0">
                     <span class="w-2 h-6 bg-primary-500 rounded-full"></span>
                     {{ department }}
                     {% with department_time_labels|dict_get:department as dept_time %}
                         {% if dept_time %}
-                            <span class="text-slate-500 text-sm font-normal">{{ dept_time }}</span>
+                            <span class="text-slate-500 text-sm font-normal whitespace-nowrap">{{ dept_time }}</span>
                         {% endif %}
                     {% endwith %}
-                    <span class="text-slate-500 text-sm font-normal">({{ students|length }}명)</span>
+                    <span class="text-slate-500 text-sm font-normal whitespace-nowrap">({{ students|length }}명)</span>
                 </h4>
-                <div class="flex items-center">
-                    <button type="button" onclick="endClassForDepartment('{{ department }}')" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors mr-4">
+                <div class="flex items-center whitespace-nowrap shrink-0">
+                    <button type="button" onclick="endClassForDepartment('{{ department }}')" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors mr-4 whitespace-nowrap">
                         <i class="ph-bold ph-door-open mr-1"></i>
                         수업종료
                     </button>
                     <input type="checkbox" id="select-all-{{ department }}" onclick="toggleDepartment('{{ department }}', this)" class="h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-600 cursor-pointer">
-                    <label for="select-all-{{ department }}" class="ml-2 text-sm text-slate-600 cursor-pointer select-none">전체선택</label>
+                    <label for="select-all-{{ department }}" class="ml-2 text-sm text-slate-600 cursor-pointer select-none whitespace-nowrap">전체선택</label>
                 </div>
             </div>
 
