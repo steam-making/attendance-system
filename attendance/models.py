@@ -55,6 +55,7 @@ class Student(models.Model):
 
 class Attendance(models.Model):
     STATUS_CHOICES = [
+        ('대기', '대기'),
         ('출석', '출석'),
         ('지각', '지각'),
         ('결석', '결석'),
@@ -85,4 +86,3 @@ class Setting(models.Model):
 
     def __str__(self):
         return f"{self.user.username}의 설정"
-
