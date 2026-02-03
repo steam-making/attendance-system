@@ -4,15 +4,54 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
 from .models import Student, Attendance
 from .serializers import AttendanceSerializer
 
-@api_view(['GET'])
+@csrf_exempt
+@api_view(['GET', 'POST'])
 def attendance_today_list(request):
     today = timezone.localdate()
-    attendance = Attendance.objects.filter(date=today)
-    serializer = AttendanceSerializer(attendance, many=True)
-    return Response(serializer.data)
+    if request.method == 'POST' and not request.user.is_authenticated:
+        return Response({"ok": False, "error": "authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+    school_id = request.data.get('school_id') if request.method == 'POST' else None
+
+    if request.method == 'POST' and not school_id:
+        return Response({"ok": False, "error": "school_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    students = Student.objects.all()
+    if school_id:
+        students = students.filter(school_id=school_id)
+
+    attendance = Attendance.objects.filter(date=today, student__in=students)
+    att_map = {a.student_id: a for a in attendance}
+
+    if request.method == 'POST':
+        for s in students:
+            if s.id not in att_map:
+                Attendance.objects.create(student=s, status='대기', date=today)
+        attendance = Attendance.objects.filter(date=today, student__in=students)
+        att_map = {a.student_id: a for a in attendance}
+
+    items = []
+    for s in students:
+        a = att_map.get(s.id)
+        items.append({
+            "id": a.id if a else None,
+            "student": {
+                "id": s.id,
+                "grade": s.grade,
+                "classroom": s.classroom,
+                "number": s.number,
+                "name": s.name,
+                "phone": s.phone,
+            },
+            "program": a.program if a else None,
+            "date": str(a.date) if a else str(today),
+            "status": a.status if a else "대기",
+        })
+
+    return Response(items)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
