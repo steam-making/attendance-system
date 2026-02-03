@@ -238,8 +238,8 @@ def ajax_attendance_check(request, student_id):
         status = data.get('status', '출석')
         program = data.get('program_name')
 
-        already_checked = Attendance.objects.filter(student=student, date=today).exists()
-        if already_checked:
+        existing_attendance = Attendance.objects.filter(student=student, date=today).first()
+        if existing_attendance and existing_attendance.status != '취소':
             return JsonResponse({'status': 'already_checked'})
 
         user = student.school.user
@@ -258,12 +258,19 @@ def ajax_attendance_check(request, student_id):
             sms_message = settings.absence_message.replace('{student_name}', student.name)
             send_sms = True
 
-        attendance = Attendance.objects.create(
-            student=student,
-            status=status,
-            program=program,
-            date=today
-        )
+        if existing_attendance:
+            existing_attendance.status = status
+            existing_attendance.program = program
+            existing_attendance.created_at = timezone.now()
+            existing_attendance.save(update_fields=['status', 'program', 'created_at'])
+            attendance = existing_attendance
+        else:
+            attendance = Attendance.objects.create(
+                student=student,
+                status=status,
+                program=program,
+                date=today
+            )
 
         created_time = timezone.localtime(attendance.created_at).strftime('%H:%M:%S')
 
