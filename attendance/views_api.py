@@ -125,14 +125,26 @@ def attendance_check_api(request):
     send_sms = False
     sms_message = ""
 
+    template_context = {
+        "{student_name}": student.name,
+        "{school_name}": student.school.name,
+        "{program_name}": student.school.program_name,
+    }
+
+    def apply_template(template):
+        rendered = template
+        for key, value in template_context.items():
+            rendered = rendered.replace(key, value or "")
+        return rendered
+
     if normalized_status == "출석":
-        sms_message = user_settings.attendance_message.replace("{student_name}", student.name)
+        sms_message = apply_template(user_settings.attendance_message)
         send_sms = True
-    elif normalized_status == "지각" and user_settings.auto_send_lateness_sms:
-        sms_message = user_settings.lateness_message.replace("{student_name}", student.name)
-        send_sms = True
+    elif normalized_status == "지각":
+        sms_message = apply_template(user_settings.lateness_message)
+        send_sms = user_settings.auto_send_lateness_sms
     elif normalized_status == "결석":
-        sms_message = user_settings.absence_message.replace("{student_name}", student.name)
+        sms_message = apply_template(user_settings.absence_message)
         send_sms = True
 
     return Response(
@@ -172,11 +184,17 @@ def attendance_end_api(request):
     student = Student.objects.get(id=student_id)
     user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
 
-    send_sms = False
-    sms_message = ""
-    if user_settings.auto_send_class_end_sms:
-        sms_message = user_settings.class_end_message.replace("{student_name}", student.name)
-        send_sms = True
+    template_context = {
+        "{student_name}": student.name,
+        "{school_name}": student.school.name,
+        "{program_name}": student.school.program_name,
+    }
+
+    rendered = user_settings.class_end_message
+    for key, value in template_context.items():
+        rendered = rendered.replace(key, value or "")
+    sms_message = rendered
+    send_sms = user_settings.auto_send_class_end_sms
 
     return Response(
         {
