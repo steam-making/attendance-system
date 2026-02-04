@@ -182,6 +182,7 @@ class SettingsForm(forms.ModelForm):
             'lateness_message',
             'absence_message',
             'class_end_message',
+            'cancel_message',
             'auto_send_class_end_sms',
             'auto_send_lateness_sms',
         ]
@@ -190,6 +191,7 @@ class SettingsForm(forms.ModelForm):
             'lateness_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'absence_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'class_end_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
+            'cancel_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'auto_send_class_end_sms': forms.CheckboxInput(attrs={'class': 'rounded h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500'}),
             'auto_send_lateness_sms': forms.CheckboxInput(attrs={'class': 'rounded h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500'}),
         }
