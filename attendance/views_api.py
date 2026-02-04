@@ -5,7 +5,7 @@ from rest_framework import status
 from django.utils import timezone
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
-from .models import Student, Attendance
+from .models import Student, Attendance, Setting
 from .serializers import AttendanceSerializer
 
 @csrf_exempt
@@ -97,17 +97,55 @@ def attendance_check_api(request):
     if not student_id:
         return Response({"ok": False, "error": "student_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
+    status_map = {
+        "present": "출석",
+        "late": "지각",
+        "absence": "결석",
+        "absent": "결석",
+        "waiting": "대기",
+        "cancel": "취소",
+        "canceled": "취소",
+        "ended": "종료처리",
+    }
+    raw_status = request.data.get("status", "출석")
+    normalized_status = status_map.get(raw_status, raw_status)
+
     today = timezone.localdate()
     obj, created = Attendance.objects.get_or_create(
         student_id=student_id,
         date=today,
-        defaults={"status": "present"}
+        defaults={"status": normalized_status}
     )
     if not created:
-        obj.status = "present"
+        obj.status = normalized_status
         obj.save()
+    student = Student.objects.get(id=student_id)
+    user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
 
-    return Response({"ok": True, "created": created, "attendance_id": obj.id, "status": obj.status}, status=status.HTTP_200_OK)
+    send_sms = False
+    sms_message = ""
+
+    if normalized_status == "출석":
+        sms_message = user_settings.attendance_message.replace("{student_name}", student.name)
+        send_sms = True
+    elif normalized_status == "지각" and user_settings.auto_send_lateness_sms:
+        sms_message = user_settings.lateness_message.replace("{student_name}", student.name)
+        send_sms = True
+    elif normalized_status == "결석":
+        sms_message = user_settings.absence_message.replace("{student_name}", student.name)
+        send_sms = True
+
+    return Response(
+        {
+            "ok": True,
+            "created": created,
+            "attendance_id": obj.id,
+            "status": obj.status,
+            "send_sms": send_sms,
+            "sms_message": sms_message,
+        },
+        status=status.HTTP_200_OK
+    )
 
 
 @api_view(['POST'])
@@ -125,10 +163,29 @@ def attendance_end_api(request):
     obj, created = Attendance.objects.get_or_create(
         student_id=student_id,
         date=today,
-        defaults={"status": "ended"}
+        defaults={"status": "종료처리"}
     )
     if not created:
-        obj.status = "ended"
+        obj.status = "종료처리"
         obj.save()
 
-    return Response({"ok": True, "created": created, "attendance_id": obj.id, "status": obj.status}, status=status.HTTP_200_OK)
+    student = Student.objects.get(id=student_id)
+    user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
+
+    send_sms = False
+    sms_message = ""
+    if user_settings.auto_send_class_end_sms:
+        sms_message = user_settings.class_end_message.replace("{student_name}", student.name)
+        send_sms = True
+
+    return Response(
+        {
+            "ok": True,
+            "created": created,
+            "attendance_id": obj.id,
+            "status": obj.status,
+            "send_sms": send_sms,
+            "sms_message": sms_message,
+        },
+        status=status.HTTP_200_OK
+    )

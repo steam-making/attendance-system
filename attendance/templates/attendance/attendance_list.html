@@ -469,15 +469,6 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // SMS Logic (Android Bridge) - Preserved
-                if (window.Android && typeof window.Android.sendSms === "function") {
-                    const phone = data.phone;
-                    const name = data.student;
-                    const createdAt = data.created_at;
-                    const msg = `${name}님 오늘 ${status} 처리되었습니다. (${createdAt})`;
-                    window.Android.sendSms(phone, msg);
-                }
-
                 const phone = data.phone;
                 const name = data.student;
                 const message = `${name}님 오늘 ${status} 처리되었습니다.`;
