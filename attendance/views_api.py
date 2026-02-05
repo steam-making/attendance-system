@@ -157,6 +157,9 @@ def attendance_check_api(request):
     elif normalized_status == "취소":
         sms_message = apply_template(user_settings.cancel_message)
         send_sms = True
+    elif normalized_status == "종료처리":
+        sms_message = apply_template(user_settings.class_end_message)
+        send_sms = True
 
     return Response(
         {
