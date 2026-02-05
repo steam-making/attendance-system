@@ -87,3 +87,16 @@ class Setting(models.Model):
 
     def __str__(self):
         return f"{self.user.username}의 설정"
+
+
+class AttendanceSession(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    date = models.DateField()
+    started_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('school', 'date')
+
+    def __str__(self):
+        return f"{self.school.name} {self.date} 수업"
