@@ -373,7 +373,7 @@ def ajax_attendance_check(request, student_id):
         program = data.get('program_name')
 
         existing_attendance = Attendance.objects.filter(student=student, date=today).first()
-        if existing_attendance and existing_attendance.status not in ['취소', '대기']:
+        if existing_attendance and existing_attendance.status in ['출석', '결석', '종료처리']:
             return JsonResponse({'status': 'already_checked'})
 
         user = student.school.user
