@@ -5,7 +5,7 @@ from rest_framework import status
 from django.utils import timezone
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
-from .models import Student, Attendance, Setting
+from .models import Student, Attendance, Setting, AttendanceSession
 from .serializers import AttendanceSerializer
 
 @csrf_exempt
@@ -14,7 +14,15 @@ def attendance_today_list(request):
     today = timezone.localdate()
     if request.method == 'POST' and not request.user.is_authenticated:
         return Response({"ok": False, "error": "authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
-    school_id = request.data.get('school_id') if request.method == 'POST' else None
+    if request.method == 'POST':
+        school_id = request.data.get('school_id')
+    else:
+        school_id = request.query_params.get('school_id')
+
+    if not school_id:
+        active_session = AttendanceSession.objects.filter(date=today, is_active=True).order_by('-started_at').first()
+        if active_session:
+            school_id = active_session.school_id
 
     if request.method == 'POST' and not school_id:
         return Response({"ok": False, "error": "school_id is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -142,7 +150,7 @@ def attendance_check_api(request):
         send_sms = True
     elif normalized_status == "지각":
         sms_message = apply_template(user_settings.lateness_message)
-        send_sms = user_settings.auto_send_lateness_sms
+        send_sms = True
     elif normalized_status == "결석":
         sms_message = apply_template(user_settings.absence_message)
         send_sms = True
@@ -197,7 +205,7 @@ def attendance_end_api(request):
     for key, value in template_context.items():
         rendered = rendered.replace(key, value or "")
     sms_message = rendered
-    send_sms = user_settings.auto_send_class_end_sms
+    send_sms = True
 
     return Response(
         {

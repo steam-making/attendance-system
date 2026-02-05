@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Student, Attendance, Setting, Setting
+from .models import Student, Attendance, Setting, AttendanceSession
 from django.utils import timezone
 from django.contrib import messages
 from .forms import StudentForm
@@ -12,7 +12,7 @@ from .forms import SchoolForm
 from django.contrib.auth.decorators import login_required
 from attendance.models import School
 import json
-from datetime import date
+from datetime import date, datetime, timedelta
 
 color_map_header = {
     "1부": "table-primary",
@@ -104,6 +104,140 @@ def move_student_department(request, pk):
         return redirect(f"/attendance/list/?school={student.school.id}")
 
     return HttpResponse("허용되지 않은 접근입니다.", status=405)
+
+
+def _weekday_label(target_date):
+    labels = ['월', '화', '수', '목', '금', '토', '일']
+    return labels[target_date.weekday()]
+
+
+def _parse_time(value):
+    if not value:
+        return None
+    for fmt in ('%H:%M', '%H:%M:%S'):
+        try:
+            return datetime.strptime(value, fmt).time()
+        except ValueError:
+            continue
+    return None
+
+
+@login_required
+@require_POST
+def start_class_session(request):
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+
+    school_id = data.get('school_id')
+    if not school_id:
+        return JsonResponse({'status': 'error', 'message': 'school_id가 필요합니다.'}, status=400)
+
+    school = get_object_or_404(School, id=school_id, user=request.user)
+    today = timezone.localdate()
+    now = timezone.localtime()
+
+    session, _ = AttendanceSession.objects.get_or_create(school=school, date=today)
+    session.started_at = now
+    session.is_active = True
+    session.save(update_fields=['started_at', 'is_active'])
+
+    students = Student.objects.filter(school=school)
+    student_ids = list(students.values_list('id', flat=True))
+    existing_ids = set(
+        Attendance.objects.filter(date=today, student__school=school)
+        .values_list('student_id', flat=True)
+    )
+    missing_ids = [student_id for student_id in student_ids if student_id not in existing_ids]
+    Attendance.objects.bulk_create(
+        [Attendance(student_id=student_id, date=today, status='대기') for student_id in missing_ids]
+    )
+
+    return JsonResponse({
+        'status': 'success',
+        'started_at': now.strftime('%H:%M:%S'),
+        'created': len(missing_ids)
+    })
+
+
+@login_required
+@require_POST
+def auto_process_attendance(request):
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+
+    school_id = data.get('school_id')
+    if not school_id:
+        return JsonResponse({'status': 'error', 'message': 'school_id가 필요합니다.'}, status=400)
+
+    school = get_object_or_404(School, id=school_id, user=request.user)
+    today = timezone.localdate()
+    now = timezone.localtime()
+
+    session = AttendanceSession.objects.filter(school=school, date=today, is_active=True).first()
+    if not session or not session.started_at:
+        return JsonResponse({'status': 'not_started'})
+
+    if now < session.started_at:
+        return JsonResponse({'status': 'not_started'})
+
+    class_days = []
+    if school.class_days:
+        class_days = [day.strip() for day in school.class_days.split(',') if day.strip()]
+    if class_days and _weekday_label(today) not in class_days:
+        return JsonResponse({'status': 'not_class_day'})
+
+    settings, _ = Setting.objects.get_or_create(user=request.user)
+    department_times = school.department_times or {}
+    tz = timezone.get_current_timezone()
+
+    lateness_results = {}
+    end_results = {}
+
+    for department, time_info in department_times.items():
+        if not time_info:
+            continue
+        start_time = _parse_time(time_info.get('start'))
+        end_time = _parse_time(time_info.get('end'))
+        if not start_time or not end_time:
+            continue
+
+        start_dt = timezone.make_aware(datetime.combine(today, start_time), tz)
+        end_dt = timezone.make_aware(datetime.combine(today, end_time), tz)
+
+        if settings.auto_send_lateness_sms and now >= (start_dt + timedelta(minutes=10)):
+            students = Student.objects.filter(school=school, department=department)
+            student_ids = list(students.values_list('id', flat=True))
+            if student_ids:
+                existing_qs = Attendance.objects.filter(date=today, student_id__in=student_ids)
+                existing_ids = set(existing_qs.values_list('student_id', flat=True))
+                updated_count = existing_qs.filter(status__in=['대기', '취소']).update(status='지각')
+                missing_ids = [student_id for student_id in student_ids if student_id not in existing_ids]
+                Attendance.objects.bulk_create(
+                    [Attendance(student_id=student_id, date=today, status='지각') for student_id in missing_ids]
+                )
+                lateness_results[department] = {
+                    'updated': updated_count,
+                    'created': len(missing_ids)
+                }
+
+        if settings.auto_send_class_end_sms and now >= end_dt:
+            ended_count = Attendance.objects.filter(
+                date=today,
+                student__school=school,
+                student__department=department,
+                status='출석'
+            ).update(status='종료처리')
+            end_results[department] = {'ended': ended_count}
+
+    return JsonResponse({
+        'status': 'success',
+        'lateness': lateness_results,
+        'end': end_results
+    })
 
 
 @login_required
@@ -399,6 +533,14 @@ def attendance_list(request):
 
     today = timezone.now().date()
 
+    class_session_active = False
+    if selected_school:
+        class_session_active = AttendanceSession.objects.filter(
+            school=selected_school,
+            date=today,
+            is_active=True
+        ).exists()
+
     # ✅ (권장) 선택된 학교의 학생들만 오늘 출석 가져오기
     #    학교가 없으면 빈 dict
     if selected_school:
@@ -445,6 +587,7 @@ def attendance_list(request):
         "department_options": department_options,
         "department_time_labels": department_time_labels,
         "color_map_header": color_map_header,
+        "class_session_active": class_session_active,
     })
 
 def attendance_check(request, student_id):

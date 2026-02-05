@@ -32,6 +32,8 @@ urlpatterns = [
     path('ajax/check/<int:student_id>/', views.ajax_attendance_check, name='ajax_attendance_check'),
     path('ajax/cancel/<int:student_id>/', views.ajax_attendance_cancel, name='ajax_attendance_cancel'),
     path('ajax/end/<int:student_id>/', views.mark_attendance_end, name='ajax_attendance_end'),
+    path('ajax/class/start/', views.start_class_session, name='start_class_session'),
+    path('ajax/attendance/auto/', views.auto_process_attendance, name='auto_process_attendance'),
 
     # =========================
     # ✅ 학생
