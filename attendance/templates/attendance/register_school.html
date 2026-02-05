@@ -137,9 +137,20 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-x-6 border-t border-slate-900/10 pt-8">
-                    <a href="{% url 'select_school' %}" class="text-sm font-semibold leading-6 text-slate-900 hover:text-slate-700">취소</a>
-                    <button type="submit" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">등록하기</button>
+                <div class="flex items-center justify-between border-t border-slate-900/10 pt-8">
+                    <div>
+                        {% if form.instance.pk %}
+                            <button type="button" onclick="if(confirm('정말 이 학교를 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.')) document.getElementById('delete-school-form').submit();" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                삭제하기
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-x-6">
+                        <a href="{% url 'select_school' %}" class="text-sm font-semibold leading-6 text-slate-900 hover:text-slate-700">취소</a>
+                        <button type="submit" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                            {% if form.instance.pk %}수정하기{% else %}등록하기{% endif %}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -193,4 +204,10 @@
         calculateAllTimes();
     });
 </script>
+
+{% if form.instance.pk %}
+    <form id="delete-school-form" action="{% url 'delete_school' form.instance.pk %}" method="post" style="display: none;">
+        {% csrf_token %}
+    </form>
+{% endif %}
 {% endblock %}
