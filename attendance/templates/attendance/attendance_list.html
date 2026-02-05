@@ -54,9 +54,9 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap justify-center gap-2 w-full md:w-auto">
-            <button type="button" onclick="startClass()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+            <button type="button" id="start-class-button" onclick="return startClass(event)" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors{% if class_session_active %} opacity-70 cursor-not-allowed{% endif %}" {% if class_session_active %}disabled{% endif %}>
                 <i class="ph-bold ph-play mr-1.5"></i>
-                수업시작
+                <span class="start-class-label">{% if class_session_active %}수업중{% else %}수업시작{% endif %}</span>
             </button>
 
             <button type="button" onclick="sendSmsToAll()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors">
@@ -178,6 +178,33 @@
                                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
                                                 <i class="ph-fill ph-check-circle"></i> 수업 종료
                                             </span>
+                                        {% elif attendance.status == '지각' %}
+                                            <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
+                                                    class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm"
+                                                    title="출석">
+                                                <i class="ph-bold ph-check"></i>
+                                                <span class="btn-text ml-1 text-xs">출석</span>
+                                            </button>
+
+                                            <button disabled
+                                                    class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-yellow-500 opacity-60 cursor-not-allowed"
+                                                    title="지각">
+                                                <i class="ph-bold ph-clock"></i>
+                                                <span class="btn-text ml-1 text-xs">지각</span>
+                                            </button>
+
+                                            <button onclick="checkAttendance({{ student.id }}, '결석', 'attendance-cell-{{ student.id }}')"
+                                                    class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm"
+                                                    title="결석">
+                                                <i class="ph-bold ph-x"></i>
+                                                <span class="btn-text ml-1 text-xs">결석</span>
+                                            </button>
+
+                                            <a href="/attendance/student/update/{{ student.id }}/"
+                                               class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
+                                               title="수정">
+                                                <i class="ph-bold ph-pencil-simple"></i>
+                                            </a>
                                         {% elif attendance.status != '대기' and attendance.status != '취소' %}
                                             <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
                                                     class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors"
@@ -537,7 +564,89 @@
         return null;
     }
 
-    const csrfToken = getCookie('csrftoken');
+    const csrfToken = '{{ csrf_token }}' && '{{ csrf_token }}' !== 'NOTPROVIDED'
+        ? '{{ csrf_token }}'
+        : getCookie('csrftoken');
+    const selectedSchoolId = {{ selected_school.id|default:"null" }};
+    let classSessionActive = {{ class_session_active|yesno:"true,false" }};
+
+    function setClassButtonActive(active) {
+        const button = document.getElementById('start-class-button');
+        if (!button) return;
+        const label = button.querySelector('.start-class-label');
+        if (active) {
+            button.disabled = true;
+            button.classList.add('opacity-70', 'cursor-not-allowed');
+            if (label) {
+                label.textContent = '수업중';
+            } else {
+                button.lastChild.textContent = '수업중';
+            }
+        } else {
+            button.disabled = false;
+            button.classList.remove('opacity-70', 'cursor-not-allowed');
+            if (label) {
+                label.textContent = '수업시작';
+            } else {
+                button.lastChild.textContent = '수업시작';
+            }
+        }
+    }
+
+    function startClass(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        console.log('startClass called', { selectedSchoolId, classSessionActive, csrfToken });
+        if (!selectedSchoolId) return;
+        setClassButtonActive(true);
+        fetch('/attendance/ajax/class/start/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ school_id: selectedSchoolId })
+        })
+        .then(response => {
+            console.log('startClass response', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(text || `HTTP ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('startClass data', data);
+            if (data.status === 'success') {
+                classSessionActive = true;
+                setClassButtonActive(true);
+                return;
+            }
+            setClassButtonActive(false);
+            alert(data.message || '수업 시작 처리 중 오류가 발생했습니다.');
+        })
+        .catch(error => {
+            setClassButtonActive(false);
+            console.error('❌ 수업 시작 오류:', error);
+            alert(`수업 시작 요청이 실패했습니다.\n${error.message}`);
+        });
+        return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (classSessionActive) {
+            setClassButtonActive(true);
+        }
+        const startButton = document.getElementById('start-class-button');
+        if (startButton) {
+            startButton.addEventListener('click', (event) => startClass(event));
+        }
+    });
 
     function deleteSelectedStudents() {
         const selected = Array.from(document.querySelectorAll('.student-checkbox:checked'))
@@ -712,41 +821,6 @@
             return;
         }
         window.location.href = `sms:${phoneNumbers.join(',')}`;
-    }
-
-    function startClass() {
-        const schoolId = '{{ selected_school.id }}';
-        fetch('/attendance/api/attendance/today/?format=json', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                school_id: schoolId
-            })
-        })
-        .then(async response => {
-            const contentType = response.headers.get('content-type') || '';
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(text || 'Request failed');
-            }
-            if (!contentType.includes('application/json')) {
-                const text = await response.text();
-                throw new Error(text || 'Non-JSON response');
-            }
-            return response.json();
-        })
-        .then(() => {
-            window.location.reload();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('수업 시작 처리 중 오류가 발생했습니다. 로그인 상태/서버 응답을 확인해주세요.');
-        });
     }
 
     function endClassForDepartment(departmentName) {
