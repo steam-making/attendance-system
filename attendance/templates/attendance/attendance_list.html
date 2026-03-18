@@ -54,8 +54,8 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap justify-center gap-2 w-full md:w-auto">
-            <button type="button" id="start-class-button" onclick="return startClass(event)" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors{% if class_session_active %} opacity-70 cursor-not-allowed{% endif %}" {% if class_session_active %}disabled{% endif %}>
-                <i class="ph-bold ph-play mr-1.5"></i>
+            <button type="button" id="start-class-button" onclick="return startClass(event)" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                <i class="ph-bold {% if class_session_active %}ph-stop{% else %}ph-play{% endif %} mr-1.5 start-class-icon"></i>
                 <span class="start-class-label">{% if class_session_active %}수업중{% else %}수업시작{% endif %}</span>
             </button>
 
@@ -69,11 +69,6 @@
                 선택문자보내기
             </button>
 
-            <button type="button" onclick="moveSelectedStudents()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
-                <i class="ph-bold ph-arrows-counter-clockwise mr-1.5"></i>
-                이동
-            </button>
- 
              <button type="button" onclick="toggleModal('addStudentModal')" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                  <i class="ph-bold ph-user-plus mr-1.5"></i>
                  학생 등록
@@ -124,6 +119,14 @@
                     <span class="text-slate-500 text-sm font-normal whitespace-nowrap">({{ students|length }}명)</span>
                 </h4>
                 <div class="flex items-center whitespace-nowrap shrink-0">
+                    <button type="button" onclick="moveSelectedStudents()" class="inline-flex items-center px-3 py-1.5 mr-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors whitespace-nowrap">
+                        <i class="ph-bold ph-arrows-counter-clockwise mr-1"></i>
+                        부서이동
+                    </button>
+                    <button type="button" onclick="markSelectedAsPresent('{{ department }}')" class="inline-flex items-center px-3 py-1.5 mr-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors whitespace-nowrap">
+                        <i class="ph-bold ph-check-circle mr-1"></i>
+                        선택출석
+                    </button>
                     <button type="button" onclick="endClassForDepartment('{{ department }}')" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors whitespace-nowrap">
                         <i class="ph-bold ph-door-open mr-1"></i>
                         수업종료
@@ -481,8 +484,15 @@
         });
     }
 
-    function checkAttendance(studentId, status, rowId) {
-        fetch(`/attendance/ajax/check/${studentId}/`, {
+    function checkAttendance(studentId, status, rowId, silent = false) {
+        if (!classSessionActive) {
+            if (!silent) {
+                alert('수업시작 후 출석 체크가 가능합니다.');
+            }
+            return Promise.resolve({ status: 'not_started' });
+        }
+
+        return fetch(`/attendance/ajax/check/${studentId}/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',
@@ -521,14 +531,70 @@
                     `;
                 }
             } else if (data.status === 'already_checked') {
-                alert("이미 출석 처리되었습니다.");
+                if (!silent) {
+                    alert("이미 출석 처리되었습니다.");
+                }
+                return { status: 'already_checked' };
             } else {
-                alert("오류가 발생했습니다.");
+                if (!silent) {
+                    alert("오류가 발생했습니다.");
+                }
+                return { status: 'error' };
             }
+            return { status: 'success' };
         })
         .catch(error => {
             console.error("❌ 오류 발생:", error);
+            if (!silent) {
+                alert("오류가 발생했습니다.");
+            }
+            return { status: 'error' };
         });
+    }
+
+    async function markSelectedAsPresent(departmentName) {
+        if (!classSessionActive) {
+            alert('수업시작 후 선택출석이 가능합니다.');
+            return;
+        }
+
+        const selectedCheckboxes = Array.from(document.querySelectorAll(`.checkbox-${departmentName}:checked`));
+        if (selectedCheckboxes.length === 0) {
+            alert('출석 처리할 학생을 선택하세요.');
+            return;
+        }
+
+        const results = await Promise.all(
+            selectedCheckboxes.map((checkbox) => {
+                const studentId = parseInt(checkbox.value, 10);
+                return checkAttendance(studentId, '출석', `attendance-cell-${studentId}`, true);
+            })
+        );
+
+        const successCount = results.filter((result) => result && result.status === 'success').length;
+        const alreadyCheckedCount = results.filter((result) => result && result.status === 'already_checked').length;
+        const errorCount = results.filter((result) => !result || result.status === 'error').length;
+
+        selectedCheckboxes.forEach((checkbox) => {
+            checkbox.checked = false;
+            const row = checkbox.closest('tr');
+            if (row) {
+                row.classList.remove('selected-row');
+            }
+        });
+
+        const selectAllCheckbox = document.getElementById(`select-all-${departmentName}`);
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+        }
+
+        const resultMessage = [
+            `선택출석 완료: ${successCount}명`,
+            `이미 처리됨: ${alreadyCheckedCount}명`,
+            `실패: ${errorCount}명`
+        ].join('\n');
+
+        alert(resultMessage);
     }
 
     function cancelAttendance(studentId, rowId) {
@@ -569,27 +635,66 @@
         : getCookie('csrftoken');
     const selectedSchoolId = {{ selected_school.id|default:"null" }};
     let classSessionActive = {{ class_session_active|yesno:"true,false" }};
+    let classSessionRequestInFlight = false;
+
+    function setButtonDisabledState(button, disabled) {
+        if (!button) return;
+        button.disabled = disabled;
+        button.classList.toggle('opacity-60', disabled);
+        button.classList.toggle('cursor-not-allowed', disabled);
+    }
+
+    function setAttendanceControlsActive(active) {
+        document.querySelectorAll('button[onclick*="checkAttendance"]').forEach((button) => {
+            setButtonDisabledState(button, !active);
+        });
+
+        document.querySelectorAll('button[onclick*="markSelectedAsPresent"]').forEach((button) => {
+            setButtonDisabledState(button, !active);
+        });
+
+        document.querySelectorAll('button[onclick*="endClassForDepartment"]').forEach((button) => {
+            setButtonDisabledState(button, !active);
+        });
+    }
 
     function setClassButtonActive(active) {
         const button = document.getElementById('start-class-button');
         if (!button) return;
         const label = button.querySelector('.start-class-label');
+        const icon = button.querySelector('.start-class-icon');
+        setAttendanceControlsActive(active);
+
+        button.disabled = false;
+        button.classList.remove('opacity-70', 'cursor-not-allowed', 'bg-emerald-600', 'hover:bg-emerald-700', 'focus:ring-emerald-500', 'bg-amber-600', 'hover:bg-amber-700', 'focus:ring-amber-500');
+
         if (active) {
-            button.disabled = true;
-            button.classList.add('opacity-70', 'cursor-not-allowed');
+            button.classList.add('bg-amber-600', 'hover:bg-amber-700', 'focus:ring-amber-500');
             if (label) {
                 label.textContent = '수업중';
             } else {
                 button.lastChild.textContent = '수업중';
             }
+            if (icon) {
+                icon.classList.remove('ph-play');
+                icon.classList.add('ph-stop');
+            }
         } else {
-            button.disabled = false;
-            button.classList.remove('opacity-70', 'cursor-not-allowed');
+            button.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'focus:ring-emerald-500');
             if (label) {
                 label.textContent = '수업시작';
             } else {
                 button.lastChild.textContent = '수업시작';
             }
+            if (icon) {
+                icon.classList.remove('ph-stop');
+                icon.classList.add('ph-play');
+            }
+        }
+
+        if (classSessionRequestInFlight) {
+            button.disabled = true;
+            button.classList.add('opacity-70', 'cursor-not-allowed');
         }
     }
 
@@ -598,10 +703,25 @@
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('startClass called', { selectedSchoolId, classSessionActive, csrfToken });
-        if (!selectedSchoolId) return;
-        setClassButtonActive(true);
-        fetch('/attendance/ajax/class/start/', {
+        if (!selectedSchoolId || classSessionRequestInFlight) return false;
+
+        const targetActive = !classSessionActive;
+        const confirmMessage = targetActive
+            ? '수업을 시작하시겠습니까?'
+            : '수업중 상태를 종료하고 수업시작 상태로 변경하시겠습니까?';
+
+        if (!confirm(confirmMessage)) {
+            return false;
+        }
+
+        classSessionRequestInFlight = true;
+        setClassButtonActive(classSessionActive);
+
+        const endpoint = targetActive
+            ? '/attendance/ajax/class/start/'
+            : '/attendance/ajax/class/stop/';
+
+        fetch(endpoint, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -612,7 +732,6 @@
             body: JSON.stringify({ school_id: selectedSchoolId })
         })
         .then(response => {
-            console.log('startClass response', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
                     throw new Error(text || `HTTP ${response.status}`);
@@ -621,31 +740,28 @@
             return response.json();
         })
         .then(data => {
-            console.log('startClass data', data);
             if (data.status === 'success') {
-                classSessionActive = true;
-                setClassButtonActive(true);
+                classSessionActive = targetActive;
+                setClassButtonActive(classSessionActive);
                 return;
             }
-            setClassButtonActive(false);
-            alert(data.message || '수업 시작 처리 중 오류가 발생했습니다.');
+            setClassButtonActive(classSessionActive);
+            alert(data.message || '수업 상태 변경 중 오류가 발생했습니다.');
         })
         .catch(error => {
-            setClassButtonActive(false);
-            console.error('❌ 수업 시작 오류:', error);
-            alert(`수업 시작 요청이 실패했습니다.\n${error.message}`);
+            setClassButtonActive(classSessionActive);
+            console.error('❌ 수업 상태 변경 오류:', error);
+            alert(`수업 상태 변경 요청이 실패했습니다.\n${error.message}`);
+        })
+        .finally(() => {
+            classSessionRequestInFlight = false;
+            setClassButtonActive(classSessionActive);
         });
         return false;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (classSessionActive) {
-            setClassButtonActive(true);
-        }
-        const startButton = document.getElementById('start-class-button');
-        if (startButton) {
-            startButton.addEventListener('click', (event) => startClass(event));
-        }
+        setClassButtonActive(classSessionActive);
     });
 
     function deleteSelectedStudents() {
@@ -824,6 +940,11 @@
     }
 
     function endClassForDepartment(departmentName) {
+        if (!classSessionActive) {
+            alert('수업중 상태에서만 수업종료를 할 수 있습니다.');
+            return;
+        }
+
         if (!confirm(`정말 ${departmentName} 수업을 종료하시겠습니까?\n설정에 따라 출석한 학생들에게 종료 문자가 발송될 수 있습니다.`)) {
             return;
         }

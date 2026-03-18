@@ -163,6 +163,29 @@ def start_class_session(request):
 
 @login_required
 @require_POST
+def stop_class_session(request):
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+
+    school_id = data.get('school_id')
+    if not school_id:
+        return JsonResponse({'status': 'error', 'message': 'school_id가 필요합니다.'}, status=400)
+
+    school = get_object_or_404(School, id=school_id, user=request.user)
+    today = timezone.localdate()
+
+    AttendanceSession.objects.filter(school=school, date=today, is_active=True).update(is_active=False)
+
+    return JsonResponse({
+        'status': 'success',
+        'is_active': False
+    })
+
+
+@login_required
+@require_POST
 def auto_process_attendance(request):
     try:
         data = json.loads(request.body or "{}")
