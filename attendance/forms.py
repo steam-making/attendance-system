@@ -2,6 +2,7 @@ from django import forms
 from .models import Student, Setting
 from .models import School
 from django import forms
+from .sms import default_message_map
 
 class SchoolForm(forms.ModelForm):
     CLASS_DAY_CHOICES = [
@@ -195,3 +196,58 @@ class SettingsForm(forms.ModelForm):
             'auto_send_class_end_sms': forms.CheckboxInput(attrs={'class': 'rounded h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500'}),
             'auto_send_lateness_sms': forms.CheckboxInput(attrs={'class': 'rounded h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500'}),
         }
+
+
+class SchoolSmsSettingsForm(forms.ModelForm):
+    class Meta:
+        model = School
+        fields = [
+            'attendance_message_override',
+            'lateness_message_override',
+            'absence_message_override',
+            'class_end_message_override',
+            'cancel_message_override',
+        ]
+        widgets = {
+            'attendance_message_override': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'}),
+            'lateness_message_override': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'}),
+            'absence_message_override': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'}),
+            'class_end_message_override': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'}),
+            'cancel_message_override': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm'}),
+        }
+
+    field_map = {
+        'attendance_message_override': 'attendance_message',
+        'lateness_message_override': 'lateness_message',
+        'absence_message_override': 'absence_message',
+        'class_end_message_override': 'class_end_message',
+        'cancel_message_override': 'cancel_message',
+    }
+
+    def __init__(self, *args, default_settings=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.default_settings = default_settings
+        self.default_messages = default_message_map(default_settings) if default_settings else {}
+
+        for form_field, default_field in self.field_map.items():
+            if form_field not in self.fields:
+                continue
+            default_value = self.default_messages.get(default_field, '')
+            self.fields[form_field].widget.attrs['placeholder'] = default_value
+            override_value = getattr(self.instance, form_field)
+            if override_value is None:
+                self.initial[form_field] = default_value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for form_field, default_field in self.field_map.items():
+            value = cleaned_data.get(form_field)
+            default_value = self.default_messages.get(default_field, '')
+            if value is None:
+                continue
+            normalized = value.strip()
+            if normalized == '' or normalized == default_value:
+                cleaned_data[form_field] = None
+            else:
+                cleaned_data[form_field] = value
+        return cleaned_data

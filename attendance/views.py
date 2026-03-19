@@ -8,9 +8,10 @@ from django.views.decorators.http import require_POST
 from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed
 import openpyxl
 from collections import defaultdict, OrderedDict
-from .forms import SchoolForm
+from .forms import SchoolForm, SchoolSmsSettingsForm
 from django.contrib.auth.decorators import login_required
 from attendance.models import School
+from .sms import resolve_and_render_message
 import json
 from datetime import date, datetime, timedelta
 
@@ -82,6 +83,42 @@ def update_school(request, pk):
     else:
         form = SchoolForm(instance=school)
     return render(request, 'attendance/register_school.html', {'form': form})
+
+
+@login_required
+def school_sms_settings(request, pk):
+    school = get_object_or_404(School, pk=pk, user=request.user)
+    user_settings, _ = Setting.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST' and request.POST.get('action') == 'reset_defaults':
+        school.attendance_message_override = None
+        school.lateness_message_override = None
+        school.absence_message_override = None
+        school.class_end_message_override = None
+        school.cancel_message_override = None
+        school.save(update_fields=[
+            'attendance_message_override',
+            'lateness_message_override',
+            'absence_message_override',
+            'class_end_message_override',
+            'cancel_message_override',
+        ])
+        messages.success(request, f"{school.name} 학교의 문자 설정이 기본값으로 초기화되었습니다.")
+        return redirect('school_sms_settings', pk=school.id)
+
+    if request.method == 'POST':
+        form = SchoolSmsSettingsForm(request.POST, instance=school, default_settings=user_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{school.name} 학교 문자 설정이 저장되었습니다.")
+            return redirect('school_sms_settings', pk=school.id)
+    else:
+        form = SchoolSmsSettingsForm(instance=school, default_settings=user_settings)
+
+    return render(request, 'attendance/school_sms_settings.html', {
+        'school': school,
+        'form': form,
+    })
 
 @login_required
 def delete_school(request, pk):
@@ -377,7 +414,14 @@ def ajax_attendance_cancel(request, student_id):
         student = get_object_or_404(Student, id=student_id)
         today = timezone.now().date()
         Attendance.objects.filter(student=student, date=today).update(status='취소')
-        return JsonResponse({'status': 'canceled', 'student': student.name})
+        user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
+        sms_message = resolve_and_render_message(
+            school=student.school,
+            status='취소',
+            student_name=student.name,
+            settings_obj=user_settings,
+        )
+        return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': True, 'sms_message': sms_message})
     return JsonResponse({'status': 'invalid'})
 
 from django.http import JsonResponse
@@ -406,13 +450,13 @@ def ajax_attendance_check(request, student_id):
         sms_message = ""
 
         if status == '출석':
-            sms_message = settings.attendance_message.replace('{student_name}', student.name)
+            sms_message = resolve_and_render_message(student.school, '출석', student.name, settings)
             send_sms = True
         elif status == '지각' and settings.auto_send_lateness_sms:
-            sms_message = settings.lateness_message.replace('{student_name}', student.name)
+            sms_message = resolve_and_render_message(student.school, '지각', student.name, settings)
             send_sms = True
         elif status == '결석':
-            sms_message = settings.absence_message.replace('{student_name}', student.name)
+            sms_message = resolve_and_render_message(student.school, '결석', student.name, settings)
             send_sms = True
 
         if existing_attendance:
@@ -665,13 +709,11 @@ def end_class(request):
         if not department_name or not school_id:
             return JsonResponse({'status': 'error', 'message': '필수 정보가 누락되었습니다.'}, status=400)
 
-        try:
-            user_settings = Setting.objects.get(user=request.user)
-        except Setting.DoesNotExist:
-            user_settings = Setting(user=request.user)
+        school = get_object_or_404(School, id=school_id, user=request.user)
+        user_settings, _ = Setting.objects.get_or_create(user=request.user)
 
         attendances_to_end = Attendance.objects.filter(
-            student__school_id=school_id,
+            student__school=school,
             student__department=department_name,
             date=today,
             status='출석'
@@ -687,7 +729,7 @@ def end_class(request):
 
         sms_uri = None
         if user_settings.auto_send_class_end_sms and phone_numbers:
-            message = user_settings.class_end_message.replace('{student_name}', '').strip()
+            message = resolve_and_render_message(school, '종료처리', '', user_settings).strip()
             sms_uri = f"sms:{','.join(phone_numbers)}?body={message}"
 
         return JsonResponse({

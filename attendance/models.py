@@ -28,6 +28,12 @@ class School(models.Model):
         help_text="각 부서별 수업 시간을 입력하세요"
     )
 
+    attendance_message_override = models.TextField(null=True, blank=True, verbose_name="학교별 출석 문자")
+    lateness_message_override = models.TextField(null=True, blank=True, verbose_name="학교별 지각 문자")
+    absence_message_override = models.TextField(null=True, blank=True, verbose_name="학교별 결석 문자")
+    class_end_message_override = models.TextField(null=True, blank=True, verbose_name="학교별 종료 문자")
+    cancel_message_override = models.TextField(null=True, blank=True, verbose_name="학교별 취소 문자")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

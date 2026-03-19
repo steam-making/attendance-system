@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}학교별 문자 설정 - 출결관리{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">학교별 문자 설정</h1>
+            <p class="text-sm text-slate-500 mt-1">{{ school.name }} / {{ school.program_name }}</p>
+        </div>
+        <a href="{% url 'select_school' %}" class="inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
+            <i class="ph-bold ph-arrow-left mr-1.5"></i>
+            내 학교 목록
+        </a>
+    </div>
+
+    <div class="mb-4 rounded-md bg-blue-50 border border-blue-100 p-3 text-sm text-blue-800">
+        기본 형식은 <strong>설정 페이지</strong>의 문자메세지 설정을 따릅니다. 여기서 값을 변경하면 해당 학교에만 적용됩니다.
+    </div>
+
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-slate-900">문자 템플릿</h3>
+                <p class="mt-2 text-sm text-slate-500">사용 가능 변수: {student_name}, {school_name}, {program_name}</p>
+
+                <div class="mt-6 space-y-6">
+                    <div>
+                        <label for="{{ form.attendance_message_override.id_for_label }}" class="block text-sm font-medium text-slate-700">출석 시 문자 메시지</label>
+                        {{ form.attendance_message_override }}
+                    </div>
+                    <div>
+                        <label for="{{ form.lateness_message_override.id_for_label }}" class="block text-sm font-medium text-slate-700">지각 시 문자 메시지</label>
+                        {{ form.lateness_message_override }}
+                    </div>
+                    <div>
+                        <label for="{{ form.absence_message_override.id_for_label }}" class="block text-sm font-medium text-slate-700">결석 시 문자 메시지</label>
+                        {{ form.absence_message_override }}
+                    </div>
+                    <div>
+                        <label for="{{ form.class_end_message_override.id_for_label }}" class="block text-sm font-medium text-slate-700">종료 시 문자 메시지</label>
+                        {{ form.class_end_message_override }}
+                    </div>
+                    <div>
+                        <label for="{{ form.cancel_message_override.id_for_label }}" class="block text-sm font-medium text-slate-700">취소 시 문자 메시지</label>
+                        {{ form.cancel_message_override }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
+            <button type="submit" name="action" value="reset_defaults" class="inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors" onclick="return confirm('학교별 문자 설정을 기본메세지로 초기화하시겠습니까?')">
+                <i class="ph-bold ph-arrow-counter-clockwise mr-1.5"></i>
+                초기화
+            </button>
+            <button type="submit" name="action" value="save" class="inline-flex items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors">
+                <i class="ph-bold ph-floppy-disk mr-1.5"></i>
+                저장하기
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.db import transaction
+from .sms import resolve_and_render_message
 from django.views.decorators.csrf import csrf_exempt
 from .models import Student, Attendance, Setting, AttendanceSession
 from .serializers import AttendanceSerializer
@@ -133,32 +134,20 @@ def attendance_check_api(request):
     send_sms = False
     sms_message = ""
 
-    template_context = {
-        "{student_name}": student.name,
-        "{school_name}": student.school.name,
-        "{program_name}": student.school.program_name,
-    }
-
-    def apply_template(template):
-        rendered = template
-        for key, value in template_context.items():
-            rendered = rendered.replace(key, value or "")
-        return rendered
-
     if normalized_status == "출석":
-        sms_message = apply_template(user_settings.attendance_message)
+        sms_message = resolve_and_render_message(student.school, "출석", student.name, user_settings)
         send_sms = True
     elif normalized_status == "지각":
-        sms_message = apply_template(user_settings.lateness_message)
+        sms_message = resolve_and_render_message(student.school, "지각", student.name, user_settings)
         send_sms = True
     elif normalized_status == "결석":
-        sms_message = apply_template(user_settings.absence_message)
+        sms_message = resolve_and_render_message(student.school, "결석", student.name, user_settings)
         send_sms = True
     elif normalized_status == "취소":
-        sms_message = apply_template(user_settings.cancel_message)
+        sms_message = resolve_and_render_message(student.school, "취소", student.name, user_settings)
         send_sms = True
     elif normalized_status == "종료처리":
-        sms_message = apply_template(user_settings.class_end_message)
+        sms_message = resolve_and_render_message(student.school, "종료처리", student.name, user_settings)
         send_sms = True
 
     return Response(
@@ -198,16 +187,7 @@ def attendance_end_api(request):
     student = Student.objects.get(id=student_id)
     user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
 
-    template_context = {
-        "{student_name}": student.name,
-        "{school_name}": student.school.name,
-        "{program_name}": student.school.program_name,
-    }
-
-    rendered = user_settings.class_end_message
-    for key, value in template_context.items():
-        rendered = rendered.replace(key, value or "")
-    sms_message = rendered
+    sms_message = resolve_and_render_message(student.school, "종료처리", student.name, user_settings)
     send_sms = True
 
     return Response(

@@ -5,7 +5,7 @@ from .views import (
     delete_selected_students,
     move_students,
     end_class,
-    select_school, register_school, update_school, delete_school
+    select_school, register_school, update_school, delete_school, school_sms_settings
 )
 
 urlpatterns = [
@@ -54,5 +54,6 @@ urlpatterns = [
     # =========================
     path('schools/register/', register_school, name='register_school'),
     path('school/<int:pk>/update/', update_school, name='update_school'),
+    path('school/<int:pk>/sms-settings/', school_sms_settings, name='school_sms_settings'),
     path('school/<int:pk>/delete/', delete_school, name='delete_school'),
 ]
