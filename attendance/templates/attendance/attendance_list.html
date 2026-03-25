@@ -421,6 +421,31 @@
     </div>
 </div>
 
+<div id="classActionConfirmModal" class="relative z-50 hidden" aria-labelledby="class-action-confirm-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-sm"></div>
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="ph-bold ph-warning-circle text-amber-600 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900" id="class-action-confirm-title">수업 상태 변경</h3>
+                            <p id="classActionConfirmMessage" class="mt-2 text-sm text-slate-600"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button type="button" id="classActionConfirmButton" onclick="confirmClassAction()" class="inline-flex w-full justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500 sm:ml-3 sm:w-auto">확인</button>
+                    <button type="button" onclick="closeClassActionConfirm()" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // Modal Toggle Function
     function toggleModal(modalId) {
@@ -636,6 +661,35 @@
     const selectedSchoolId = {{ selected_school.id|default:"null" }};
     let classSessionActive = {{ class_session_active|yesno:"true,false" }};
     let classSessionRequestInFlight = false;
+    let classActionConfirmHandler = null;
+
+    function openClassActionConfirm(message, onConfirm) {
+        const modal = document.getElementById('classActionConfirmModal');
+        const messageEl = document.getElementById('classActionConfirmMessage');
+        classActionConfirmHandler = onConfirm;
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeClassActionConfirm() {
+        const modal = document.getElementById('classActionConfirmModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        classActionConfirmHandler = null;
+    }
+
+    function confirmClassAction() {
+        const handler = classActionConfirmHandler;
+        closeClassActionConfirm();
+        if (typeof handler === 'function') {
+            handler();
+        }
+    }
 
     function setButtonDisabledState(button, disabled) {
         if (!button) return;
@@ -710,9 +764,12 @@
             ? '수업을 시작하시겠습니까?'
             : '수업중 상태를 종료하고 수업시작 상태로 변경하시겠습니까?';
 
-        if (!confirm(confirmMessage)) {
-            return false;
-        }
+        openClassActionConfirm(confirmMessage, () => submitClassSessionToggle(targetActive));
+        return false;
+    }
+
+    function submitClassSessionToggle(targetActive) {
+        if (!selectedSchoolId || classSessionRequestInFlight) return;
 
         classSessionRequestInFlight = true;
         setClassButtonActive(classSessionActive);
@@ -757,7 +814,6 @@
             classSessionRequestInFlight = false;
             setClassButtonActive(classSessionActive);
         });
-        return false;
     }
 
     document.addEventListener('DOMContentLoaded', () => {

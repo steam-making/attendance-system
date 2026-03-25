@@ -81,11 +81,11 @@ class Setting(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
     # SMS message templates
-    attendance_message = models.TextField(default="{student_name} 학생 출석하였습니다.", verbose_name="출석 시 문자 메시지")
-    lateness_message = models.TextField(default="{student_name} 학생 지각하였습니다.", verbose_name="지각 시 문자 메시지")
-    absence_message = models.TextField(default="{student_name} 학생 결석하였습니다.", verbose_name="결석 시 문자 메시지")
-    class_end_message = models.TextField(default="{student_name} 학생 수업 종료되었습니다.", verbose_name="종료 시 문자 메시지")
-    cancel_message = models.TextField(default="{student_name} 학생 출석이 취소되었습니다.", verbose_name="취소 시 문자 메시지")
+    attendance_message = models.TextField(default="{program_name}에 {student_name} 학생이 출석하였습니다.", verbose_name="출석 시 문자 메시지")
+    lateness_message = models.TextField(default="{program_name}에 {student_name} 학생이 지각하였습니다.", verbose_name="지각 시 문자 메시지")
+    absence_message = models.TextField(default="{program_name}에 {student_name} 학생이 결석하였습니다.", verbose_name="결석 시 문자 메시지")
+    class_end_message = models.TextField(default="{program_name}에 {student_name} 학생의 수업이 종료되었습니다.", verbose_name="종료 시 문자 메시지")
+    cancel_message = models.TextField(default="{program_name}에 {student_name} 학생의 출석이 취소되었습니다.", verbose_name="취소 시 문자 메시지")
 
     # Automation toggles
     auto_send_class_end_sms = models.BooleanField(default=False, verbose_name="자동 종료 문자 보내기")
