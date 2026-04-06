@@ -45,6 +45,21 @@
         <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-100">
             <form method="post" action="{% url 'signup' %}" class="space-y-6">
                 {% csrf_token %}
+                {% if form.errors %}
+                <div class="bg-red-50 p-4 rounded-md border border-red-200">
+                    <h3 class="text-sm font-medium text-red-800">입력하신 정보에 오류가 있습니다:</h3>
+                    <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
                 
                 <!-- 아이디 -->
                 <div>

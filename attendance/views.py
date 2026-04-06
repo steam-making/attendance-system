@@ -683,7 +683,7 @@ def attendance_list(request):
 
     department_time_labels = {}
     if selected_school:
-        for dept, time_info in selected_school.get_today_department_times(today_date).items():
+        for dept, time_info in selected_school.get_today_department_times(daily_target_date).items():
             if not time_info:
                 continue
             start_time = time_info.get("start")
