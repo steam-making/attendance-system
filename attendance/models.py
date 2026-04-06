@@ -71,8 +71,14 @@ class Attendance(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='출석')  # ✅ 추가
+    absence_reason = models.CharField(max_length=200, null=True, blank=True, verbose_name="결석 사유")
     program = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # ✅ 출석 시간
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'date'], name='uniq_attendance_student_date'),
+        ]
 
     def __str__(self):
         return f"{self.student} - {self.date}"

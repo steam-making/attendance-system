@@ -429,15 +429,18 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-@csrf_exempt
+@login_required
 def ajax_attendance_check(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
+    student = get_object_or_404(Student, id=student_id, school__user=request.user)
     today = timezone.localdate()
 
     if request.method == 'POST':
         data = json.loads(request.body or "{}")
         status = data.get('status', '출석')
         program = data.get('program_name')
+        absence_reason = (data.get('absence_reason') or '').strip()
+        if status != '결석':
+            absence_reason = ''
 
         existing_attendance = Attendance.objects.filter(student=student, date=today).first()
         if existing_attendance and existing_attendance.status in ['출석', '결석', '종료처리']:
@@ -461,14 +464,16 @@ def ajax_attendance_check(request, student_id):
 
         if existing_attendance:
             existing_attendance.status = status
+            existing_attendance.absence_reason = absence_reason or None
             existing_attendance.program = program
             existing_attendance.created_at = timezone.now()
-            existing_attendance.save(update_fields=['status', 'program', 'created_at'])
+            existing_attendance.save(update_fields=['status', 'absence_reason', 'program', 'created_at'])
             attendance = existing_attendance
         else:
             attendance = Attendance.objects.create(
                 student=student,
                 status=status,
+                absence_reason=absence_reason or None,
                 program=program,
                 date=today
             )
@@ -480,6 +485,7 @@ def ajax_attendance_check(request, student_id):
             'student': student.name,
             'phone': student.phone,
             'attendance_status': status,
+            'absence_reason': attendance.absence_reason or '',
             'program_name': program,
             'created_at': created_time,
             'send_sms': send_sms,
@@ -506,6 +512,28 @@ def student_update(request, pk):
         'student': student,
         'selected_school': student.school
         })
+
+
+@login_required
+def student_attendance_history(request, pk):
+    student = get_object_or_404(Student, pk=pk, school__user=request.user)
+    attendance_history = Attendance.objects.filter(student=student).order_by('-date', '-created_at')
+
+    monthly_history = OrderedDict()
+    for record in attendance_history:
+        month_key = record.date.strftime('%Y-%m')
+        if month_key not in monthly_history:
+            monthly_history[month_key] = {
+                'label': record.date.strftime('%Y년 %m월'),
+                'records': []
+            }
+        monthly_history[month_key]['records'].append(record)
+
+    return render(request, 'attendance/student_attendance_history.html', {
+        'student': student,
+        'selected_school': student.school,
+        'monthly_history': list(monthly_history.values()),
+    })
 
 def student_create(request):
     school_id = request.GET.get('school')
@@ -599,6 +627,28 @@ def attendance_list(request):
     students = Student.objects.filter(school=selected_school) if selected_school else []
 
     today = timezone.now().date()
+    daily_date_param = request.GET.get('daily_date')
+    if daily_date_param:
+        try:
+            daily_target_date = datetime.strptime(daily_date_param, '%Y-%m-%d').date()
+        except ValueError:
+            daily_target_date = today
+    else:
+        daily_target_date = today
+
+    daily_present_attendances = []
+    daily_absent_attendances = []
+    if selected_school:
+        daily_attendance_qs = Attendance.objects.filter(
+            date=daily_target_date,
+            student__school=selected_school
+        ).select_related('student').order_by('student__department', 'student__grade', 'student__classroom', 'student__number')
+
+        for attendance in daily_attendance_qs:
+            if attendance.status == '결석':
+                daily_absent_attendances.append(attendance)
+            elif attendance.status in ['출석', '지각', '종료처리']:
+                daily_present_attendances.append(attendance)
 
     class_session_active = False
     if selected_school:
@@ -655,6 +705,11 @@ def attendance_list(request):
         "department_time_labels": department_time_labels,
         "color_map_header": color_map_header,
         "class_session_active": class_session_active,
+        "daily_target_date": daily_target_date,
+        "daily_date_iso": daily_target_date.isoformat(),
+        "daily_present_attendances": daily_present_attendances,
+        "daily_absent_attendances": daily_absent_attendances,
+        "active_dates_json": json.dumps([d.isoformat() for d in Attendance.objects.filter(student__school=selected_school).values_list('date', flat=True).distinct()]) if selected_school else '[]',
     })
 
 def attendance_check(request, student_id):
