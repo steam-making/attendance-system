@@ -251,7 +251,7 @@ def auto_process_attendance(request):
         return JsonResponse({'status': 'not_class_day'})
 
     settings, _ = Setting.objects.get_or_create(user=request.user)
-    department_times = school.department_times or {}
+    department_times = school.get_today_department_times(today)
     tz = timezone.get_current_timezone()
 
     lateness_results = {}
@@ -682,8 +682,8 @@ def attendance_list(request):
         )
 
     department_time_labels = {}
-    if selected_school and selected_school.department_times:
-        for dept, time_info in selected_school.department_times.items():
+    if selected_school:
+        for dept, time_info in selected_school.get_today_department_times(today_date).items():
             if not time_info:
                 continue
             start_time = time_info.get("start")

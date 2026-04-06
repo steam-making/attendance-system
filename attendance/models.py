@@ -38,6 +38,22 @@ class School(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_today_department_times(self, today=None):
+        if not self.department_times:
+            return {}
+            
+        import datetime
+        if today is None:
+            today = datetime.date.today()
+            
+        labels = ['월', '화', '수', '목', '금', '토', '일']
+        day_label = labels[today.weekday()]
+        
+        if self.department_times.get('type') == 'daily':
+            return self.department_times.get('schedule', {}).get(day_label, {})
+            
+        return self.department_times
     
 class Student(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)  # ✅ 추가

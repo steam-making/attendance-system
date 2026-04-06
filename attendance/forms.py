@@ -36,6 +36,13 @@ class SchoolForm(forms.ModelForm):
         label='운영 부서',
     )
 
+    time_setting_type = forms.ChoiceField(
+        choices=[('same', '요일 상관없이 같게'), ('per_day', '요일마다 다르게')],
+        initial='same',
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label='시간 설정 방식'
+    )
+
     first_class_start = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}), label='전체 시작 시간')
     break_time = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': '분'}), label='쉬는 시간 (분)')
     class_duration = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': '분'}), label='수업 시간 (분)')
@@ -64,46 +71,63 @@ class SchoolForm(forms.ModelForm):
         departments = self.cleaned_data.get('departments', [])
         instance.departments = ','.join(departments) if departments else ''
 
+        def calculate_dept_times(start, break_time, class_duration, depts):
+            times_dict = {}
+            if ({'1부', '2부', '3부'} & set(depts)) and start and break_time and class_duration:
+                from datetime import datetime, timedelta, date
+
+                if hasattr(start, 'hour'):
+                    start_time = datetime.combine(date.today(), start)
+                else:
+                    try:
+                        start_time = datetime.strptime(str(start), '%H:%M:%S')
+                    except ValueError:
+                        start_time = datetime.strptime(str(start), '%H:%M')
+
+                end_time = start_time + timedelta(minutes=class_duration)
+                start_2부 = start_time + timedelta(minutes=class_duration + break_time)
+                end_2부 = start_2부 + timedelta(minutes=class_duration)
+                start_3부 = start_2부 + timedelta(minutes=class_duration + break_time)
+                end_3부 = start_3부 + timedelta(minutes=class_duration)
+
+                if '1부' in depts:
+                    times_dict['1부'] = {
+                        'start': start_time.strftime('%H:%M'),
+                        'end': end_time.strftime('%H:%M')
+                    }
+
+                if '2부' in depts:
+                    times_dict['2부'] = {
+                        'start': start_2부.strftime('%H:%M'),
+                        'end': end_2부.strftime('%H:%M')
+                    }
+
+                if '3부' in depts:
+                    times_dict['3부'] = {
+                        'start': start_3부.strftime('%H:%M'),
+                        'end': end_3부.strftime('%H:%M')
+                    }
+            return times_dict
+
+        time_setting_type = self.cleaned_data.get('time_setting_type', 'same')
         department_times = {}
 
-        start = self.cleaned_data.get('first_class_start')
-        break_time = self.cleaned_data.get('break_time')
-        class_duration = self.cleaned_data.get('class_duration')
-
-        if ({'1부', '2부', '3부'} & set(departments)) and start and break_time and class_duration:
-            from datetime import datetime, timedelta, date
-
-            if hasattr(start, 'hour'):
-                start_time = datetime.combine(date.today(), start)
-            else:
-                try:
-                    start_time = datetime.strptime(str(start), '%H:%M:%S')
-                except ValueError:
-                    start_time = datetime.strptime(str(start), '%H:%M')
-
-            end_time = start_time + timedelta(minutes=class_duration)
-            start_2부 = start_time + timedelta(minutes=class_duration + break_time)
-            end_2부 = start_2부 + timedelta(minutes=class_duration)
-            start_3부 = start_2부 + timedelta(minutes=class_duration + break_time)
-            end_3부 = start_3부 + timedelta(minutes=class_duration)
-
-            if '1부' in departments:
-                department_times['1부'] = {
-                    'start': start_time.strftime('%H:%M'),
-                    'end': end_time.strftime('%H:%M')
-                }
-
-            if '2부' in departments:
-                department_times['2부'] = {
-                    'start': start_2부.strftime('%H:%M'),
-                    'end': end_2부.strftime('%H:%M')
-                }
-
-            if '3부' in departments:
-                department_times['3부'] = {
-                    'start': start_3부.strftime('%H:%M'),
-                    'end': end_3부.strftime('%H:%M')
-                }
+        if time_setting_type == 'same':
+            start = self.cleaned_data.get('first_class_start')
+            break_time = self.cleaned_data.get('break_time')
+            class_duration = self.cleaned_data.get('class_duration')
+            department_times = calculate_dept_times(start, break_time, class_duration, departments)
+        else:
+            department_times = {'type': 'daily', 'schedule': {}}
+            for day in class_days:
+                start = self.cleaned_data.get(f'{day}_first_class_start')
+                break_time = self.cleaned_data.get(f'{day}_break_time')
+                class_duration = self.cleaned_data.get(f'{day}_class_duration')
+                times = calculate_dept_times(start, break_time, class_duration, departments)
+                if times:
+                    department_times['schedule'][day] = times
+            if not department_times.get('schedule'):
+                department_times = {}
 
         instance.department_times = department_times if department_times else None
 
@@ -113,6 +137,11 @@ class SchoolForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        for day_val, _ in self.CLASS_DAY_CHOICES:
+            self.fields[f'{day_val}_first_class_start'] = forms.TimeField(required=False, widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}), label=f'{day_val} 시작 시간')
+            self.fields[f'{day_val}_break_time'] = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': '분'}), label=f'{day_val} 쉬는 시간')
+            self.fields[f'{day_val}_class_duration'] = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': '분'}), label=f'{day_val} 수업 시간')
 
         if self.instance and self.instance.pk:
             if self.instance.class_days:
@@ -129,26 +158,39 @@ class SchoolForm(forms.ModelForm):
                 ]
 
             department_times = self.instance.department_times or {}
-            dept1 = department_times.get('1부')
-            dept2 = department_times.get('2부')
+            
+            def load_dept_times_to_initial(dept_dict, prefix=''):
+                dept1 = dept_dict.get('1부')
+                dept2 = dept_dict.get('2부')
 
-            if dept1 and dept1.get('start'):
-                self.initial['first_class_start'] = dept1.get('start')
+                if dept1 and dept1.get('start'):
+                    self.initial[f'{prefix}first_class_start'] = dept1.get('start')
 
-            if dept1 and dept1.get('start') and dept1.get('end'):
-                from datetime import datetime, timedelta
+                if dept1 and dept1.get('start') and dept1.get('end'):
+                    from datetime import datetime, timedelta
 
-                start_1 = datetime.strptime(dept1['start'], '%H:%M')
-                end_1 = datetime.strptime(dept1['end'], '%H:%M')
-                duration_minutes = int((end_1 - start_1) / timedelta(minutes=1))
-                if duration_minutes > 0:
-                    self.initial['class_duration'] = duration_minutes
+                    start_1 = datetime.strptime(dept1['start'], '%H:%M')
+                    end_1 = datetime.strptime(dept1['end'], '%H:%M')
+                    duration_minutes = int((end_1 - start_1) / timedelta(minutes=1))
+                    if duration_minutes > 0:
+                        self.initial[f'{prefix}class_duration'] = duration_minutes
 
-                if dept2 and dept2.get('start'):
-                    start_2 = datetime.strptime(dept2['start'], '%H:%M')
-                    break_minutes = int((start_2 - end_1) / timedelta(minutes=1))
-                    if break_minutes > 0:
-                        self.initial['break_time'] = break_minutes
+                    if dept2 and dept2.get('start'):
+                        start_2 = datetime.strptime(dept2['start'], '%H:%M')
+                        break_minutes = int((start_2 - end_1) / timedelta(minutes=1))
+                        if break_minutes > 0:
+                            self.initial[f'{prefix}break_time'] = break_minutes
+
+            if department_times.get('type') == 'daily':
+                self.initial['time_setting_type'] = 'per_day'
+                schedule = department_times.get('schedule', {})
+                for day_val, _ in self.CLASS_DAY_CHOICES:
+                    day_dept = schedule.get(day_val, {})
+                    if day_dept:
+                        load_dept_times_to_initial(day_dept, prefix=f'{day_val}_')
+            else:
+                self.initial['time_setting_type'] = 'same'
+                load_dept_times_to_initial(department_times, prefix='')
         else:
             self.initial['departments'] = [choice[0] for choice in self.DEPARTMENT_CHOICES]
 

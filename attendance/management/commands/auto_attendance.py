@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 continue
 
             settings, _ = Setting.objects.get_or_create(user=school.user)
-            department_times = school.department_times or {}
+            department_times = school.get_today_department_times(today)
             processed_any = False
 
             for department, time_info in department_times.items():
