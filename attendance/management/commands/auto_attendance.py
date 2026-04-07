@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 end_dt = timezone.make_aware(datetime.combine(today, end_time), tz)
                 lateness_dt = start_dt + timedelta(minutes=10)
 
-                if settings.auto_send_lateness_sms and _time_matches(now, lateness_dt.time()):
+                if settings.send_lateness_sms and settings.auto_send_lateness_sms and _time_matches(now, lateness_dt.time()):
                     students = Student.objects.filter(school=school, department=department)
                     student_ids = list(students.values_list('id', flat=True))
                     if student_ids:
@@ -85,7 +85,7 @@ class Command(BaseCommand):
                             f"[{now:%H:%M}] 지각 처리: {school.name} {department} updated={updated_count} created={len(missing_ids)}"
                         )
 
-                if settings.auto_send_class_end_sms and _time_matches(now, end_dt.time()):
+                if settings.send_class_end_sms and settings.auto_send_class_end_sms and _time_matches(now, end_dt.time()):
                     ended_count = Attendance.objects.filter(
                         date=today,
                         student__school=school,

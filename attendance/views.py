@@ -415,13 +415,20 @@ def ajax_attendance_cancel(request, student_id):
         today = timezone.now().date()
         Attendance.objects.filter(student=student, date=today).update(status='취소')
         user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
-        sms_message = resolve_and_render_message(
-            school=student.school,
-            status='취소',
-            student_name=student.name,
-            settings_obj=user_settings,
-        )
-        return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': True, 'sms_message': sms_message})
+        
+        send_sms = False
+        sms_message = ""
+        
+        if user_settings.send_cancel_sms:
+            sms_message = resolve_and_render_message(
+                school=student.school,
+                status='취소',
+                student_name=student.name,
+                settings_obj=user_settings,
+            )
+            send_sms = True
+            
+        return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': send_sms, 'sms_message': sms_message})
     return JsonResponse({'status': 'invalid'})
 
 from django.http import JsonResponse
@@ -452,13 +459,13 @@ def ajax_attendance_check(request, student_id):
         send_sms = False
         sms_message = ""
 
-        if status == '출석':
+        if status == '출석' and settings.send_attendance_sms:
             sms_message = resolve_and_render_message(student.school, '출석', student.name, settings)
             send_sms = True
-        elif status == '지각' and settings.auto_send_lateness_sms:
+        elif status == '지각' and settings.send_lateness_sms and settings.auto_send_lateness_sms:
             sms_message = resolve_and_render_message(student.school, '지각', student.name, settings)
             send_sms = True
-        elif status == '결석':
+        elif status == '결석' and settings.send_absence_sms:
             sms_message = resolve_and_render_message(student.school, '결석', student.name, settings)
             send_sms = True
 
@@ -783,7 +790,7 @@ def end_class(request):
         attendances_to_end.update(status='종료처리')
 
         sms_uri = None
-        if user_settings.auto_send_class_end_sms and phone_numbers:
+        if user_settings.send_class_end_sms and user_settings.auto_send_class_end_sms and phone_numbers:
             message = resolve_and_render_message(school, '종료처리', '', user_settings).strip()
             sms_uri = f"sms:{','.join(phone_numbers)}?body={message}"
 

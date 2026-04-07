@@ -109,6 +109,13 @@ class Setting(models.Model):
     class_end_message = models.TextField(default="{program_name}에 {student_name} 학생의 수업이 종료되었습니다.", verbose_name="종료 시 문자 메시지")
     cancel_message = models.TextField(default="{program_name}에 {student_name} 학생의 출석이 취소되었습니다.", verbose_name="취소 시 문자 메시지")
 
+    # SMS sending toggles
+    send_attendance_sms = models.BooleanField(default=True, verbose_name="출석 문자 발송")
+    send_lateness_sms = models.BooleanField(default=True, verbose_name="지각 문자 발송")
+    send_absence_sms = models.BooleanField(default=True, verbose_name="결석 문자 발송")
+    send_cancel_sms = models.BooleanField(default=True, verbose_name="취소 문자 발송")
+    send_class_end_sms = models.BooleanField(default=True, verbose_name="종료 문자 발송")
+
     # Automation toggles
     auto_send_class_end_sms = models.BooleanField(default=False, verbose_name="자동 종료 문자 보내기")
     auto_send_lateness_sms = models.BooleanField(default=False, verbose_name="자동 지각 문자 보내기")

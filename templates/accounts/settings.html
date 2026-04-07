@@ -10,10 +10,60 @@
         {% csrf_token %}
 
         <div class="space-y-8">
+            <!-- SMS Sending Settings -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">SMS 발송 설정</h3>
+                    <p class="mt-2 text-sm text-gray-500">각 상태별로 SMS 발송 여부를 설정합니다. 체크 해제 시 해당 상태의 문자는 발송되지 않습니다.</p>
+                    <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.send_attendance_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.send_attendance_sms.id_for_label }}" class="font-medium text-gray-700">출석 문자 발송</label>
+                            </div>
+                        </div>
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.send_lateness_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.send_lateness_sms.id_for_label }}" class="font-medium text-gray-700">지각 문자 발송</label>
+                            </div>
+                        </div>
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.send_absence_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.send_absence_sms.id_for_label }}" class="font-medium text-gray-700">결석 문자 발송</label>
+                            </div>
+                        </div>
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.send_cancel_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.send_cancel_sms.id_for_label }}" class="font-medium text-gray-700">취소 문자 발송</label>
+                            </div>
+                        </div>
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.send_class_end_sms }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.send_class_end_sms.id_for_label }}" class="font-medium text-gray-700">종료 문자 발송</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- SMS Message Settings -->
             <div class="bg-white shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">SMS 기본 문자메시지 설정</h3>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">SMS 기본 문자메시지 내용 설정</h3>
                     <p class="mt-2 text-sm text-gray-500">
                         사용 가능 변수: {student_name}, {school_name}, {program_name}
                     </p>

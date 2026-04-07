@@ -221,6 +221,11 @@ class SettingsForm(forms.ModelForm):
     class Meta:
         model = Setting
         fields = [
+            'send_attendance_sms',
+            'send_lateness_sms',
+            'send_absence_sms',
+            'send_class_end_sms',
+            'send_cancel_sms',
             'attendance_message',
             'lateness_message',
             'absence_message',
@@ -230,6 +235,11 @@ class SettingsForm(forms.ModelForm):
             'auto_send_lateness_sms',
         ]
         widgets = {
+            'send_attendance_sms': forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'}),
+            'send_lateness_sms': forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'}),
+            'send_absence_sms': forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'}),
+            'send_class_end_sms': forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'}),
+            'send_cancel_sms': forms.CheckboxInput(attrs={'class': 'h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'}),
             'attendance_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'lateness_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'absence_message': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
