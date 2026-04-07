@@ -271,7 +271,7 @@
                                                 <i class="ph-bold ph-x"></i>
                                                 <span class="btn-text ml-1 text-xs">취소</span>
                                             </button>
-                                        {% elif not attendance.status|startswith:'대기' and not attendance.status|startswith:'취소' %}
+                                        {% elif attendance and not attendance.status|startswith:'대기' and not attendance.status|startswith:'취소' %}
                                             <div class="flex justify-center items-center gap-2">
                                                 {% if attendance.status|startswith:'결석' %}
                                                     <span class="text-xs text-red-600 font-bold bg-red-50 px-2 py-1 rounded border border-red-100">{{ attendance.absence_reason|default:"사유 없음" }}</span>

@@ -665,9 +665,10 @@ def attendance_list(request):
         ).select_related('student').order_by('student__department', 'student__grade', 'student__classroom', 'student__number')
 
         for attendance in daily_attendance_qs:
-            if attendance.status.startswith('결석'):
+            status = attendance.status or ""
+            if status.startswith('결석'):
                 daily_absent_attendances.append(attendance)
-            elif attendance.status.startswith('출석') or attendance.status.startswith('지각') or attendance.status.startswith('종료처리'):
+            elif status.startswith('출석') or status.startswith('지각') or status.startswith('종료처리'):
                 daily_present_attendances.append(attendance)
 
     class_session_active = False
