@@ -435,9 +435,7 @@ def ajax_attendance_cancel(request, student_id):
         return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': send_sms, 'sms_message': sms_message})
     return JsonResponse({'status': 'invalid'})
 
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
+
 from django.views.decorators.csrf import csrf_exempt
 
 @login_required
