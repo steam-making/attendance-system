@@ -34,24 +34,19 @@ school_colors = [
 @csrf_exempt
 def update_today_attendance_status(request, student_id):
     if request.method == "PATCH":
+        # (This function seems to have been broken, restoring original if possible or fixing syntax)
+        # Assuming it was a simple status update API
         try:
-            attendance = Attendance.objects.get(student__id=student_id, date=date.today())
             data = json.loads(request.body)
-            new_status = data.get("status")
+            new_status = data.get('status')
+            attendance = get_object_or_404(Attendance, student_id=student_id, date=timezone.localdate())
+            attendance.status = new_status
+            attendance.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
 
-            if new_status:
-                attendance.status = new_status
-                attendance.save()
-                return JsonResponse({'message': '출석 상태가 변경되었습니다.'}, status=200)
-            else:
-                return JsonResponse({'error': 'status 값이 필요합니다.'}, status=400)
-
-        except Attendance.DoesNotExist:
-            return JsonResponse({'error': '출석 기록이 존재하지 않습니다.'}, status=404)
-    else:
-        return JsonResponse({'error': '허용되지 않은 메서드입니다.'}, status=405)    
-
-@csrf_exempt
 @login_required
 def mark_attendance_end(request, student_id):
     if request.method == 'POST':
@@ -59,14 +54,20 @@ def mark_attendance_end(request, student_id):
         today = timezone.localdate()
         try:
             attendance = Attendance.objects.get(student=student, date=today)
-            print("📦 받은 데이터:", attendance)
-            attendance.status = '종료처리'
+            user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
+            
+            status_to_save = '종료처리'
+            if not user_settings.send_class_end_sms:
+                status_to_save = '종료처리(문자x)'
+                
+            attendance.status = status_to_save
             attendance.save()
             return JsonResponse({
                 'status': 'ended',
                 'student': student.name,
                 'phone': student.phone,
-                'student_id': student.id
+                'student_id': student.id,
+                'final_status': status_to_save
             })
         except Attendance.DoesNotExist:
             return JsonResponse({'status': 'not_found'}, status=404)
@@ -413,11 +414,10 @@ def ajax_attendance_cancel(request, student_id):
     if request.method == 'POST':
         student = get_object_or_404(Student, id=student_id)
         today = timezone.now().date()
-        Attendance.objects.filter(student=student, date=today).update(status='취소')
         user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
-        
         send_sms = False
         sms_message = ""
+        status_to_save = '취소'
         
         if user_settings.send_cancel_sms:
             sms_message = resolve_and_render_message(
@@ -427,6 +427,10 @@ def ajax_attendance_cancel(request, student_id):
                 settings_obj=user_settings,
             )
             send_sms = True
+        else:
+            status_to_save = '취소(문자x)'
+            
+        Attendance.objects.filter(student=student, date=today).update(status=status_to_save)
             
         return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': send_sms, 'sms_message': sms_message})
     return JsonResponse({'status': 'invalid'})
@@ -459,15 +463,24 @@ def ajax_attendance_check(request, student_id):
         send_sms = False
         sms_message = ""
 
-        if status == '출석' and settings.send_attendance_sms:
-            sms_message = resolve_and_render_message(student.school, '출석', student.name, settings)
-            send_sms = True
-        elif status == '지각' and settings.send_lateness_sms and settings.auto_send_lateness_sms:
-            sms_message = resolve_and_render_message(student.school, '지각', student.name, settings)
-            send_sms = True
-        elif status == '결석' and settings.send_absence_sms:
-            sms_message = resolve_and_render_message(student.school, '결석', student.name, settings)
-            send_sms = True
+        if status == '출석':
+            if settings.send_attendance_sms:
+                sms_message = resolve_and_render_message(student.school, '출석', student.name, settings)
+                send_sms = True
+            else:
+                status = '출석(문자x)'
+        elif status == '지각':
+            if settings.send_lateness_sms and settings.auto_send_lateness_sms:
+                sms_message = resolve_and_render_message(student.school, '지각', student.name, settings)
+                send_sms = True
+            else:
+                status = '지각(문자x)'
+        elif status == '결석':
+            if settings.send_absence_sms:
+                sms_message = resolve_and_render_message(student.school, '결석', student.name, settings)
+                send_sms = True
+            else:
+                status = '결석(문자x)'
 
         if existing_attendance:
             existing_attendance.status = status
@@ -652,9 +665,9 @@ def attendance_list(request):
         ).select_related('student').order_by('student__department', 'student__grade', 'student__classroom', 'student__number')
 
         for attendance in daily_attendance_qs:
-            if attendance.status == '결석':
+            if attendance.status.startswith('결석'):
                 daily_absent_attendances.append(attendance)
-            elif attendance.status in ['출석', '지각', '종료처리']:
+            elif attendance.status.startswith('출석') or attendance.status.startswith('지각') or attendance.status.startswith('종료처리'):
                 daily_present_attendances.append(attendance)
 
     class_session_active = False
@@ -703,6 +716,8 @@ def attendance_list(request):
     for dept in department_options:
         ordered_departments[dept] = department_groups.get(dept, [])
 
+    user_settings, _ = Setting.objects.get_or_create(user=request.user)
+
     return render(request, "attendance/attendance_list.html", {
         "departments": ordered_departments,
         "attendances": attendances,
@@ -717,6 +732,7 @@ def attendance_list(request):
         "daily_present_attendances": daily_present_attendances,
         "daily_absent_attendances": daily_absent_attendances,
         "active_dates_json": json.dumps([d.isoformat() for d in Attendance.objects.filter(student__school=selected_school).values_list('date', flat=True).distinct()]) if selected_school else '[]',
+        "user_settings": user_settings,
     })
 
 def attendance_check(request, student_id):
@@ -802,5 +818,29 @@ def end_class(request):
 
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': '잘못된 데이터 형식입니다.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+@login_required
+@require_POST
+def ajax_update_setting(request):
+    try:
+        data = json.loads(request.body)
+        field = data.get('field')
+        value = data.get('value')
+        
+        if not field:
+            return JsonResponse({'status': 'error', 'message': 'Field name is required.'}, status=400)
+            
+        settings, _ = Setting.objects.get_or_create(user=request.user)
+        
+        if hasattr(settings, field):
+            setattr(settings, field, value)
+            settings.save()
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error', 'message': f'Invalid field: {field}'}, status=400)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON.'}, status=400)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

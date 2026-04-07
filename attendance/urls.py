@@ -35,6 +35,7 @@ urlpatterns = [
     path('ajax/class/start/', views.start_class_session, name='start_class_session'),
     path('ajax/class/stop/', views.stop_class_session, name='stop_class_session'),
     path('ajax/attendance/auto/', views.auto_process_attendance, name='auto_process_attendance'),
+    path('ajax/settings/update/', views.ajax_update_setting, name='ajax_update_setting'),
 
     # =========================
     # ✅ 학생

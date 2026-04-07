@@ -220,20 +220,30 @@
                             </td>
 
                             <td class="px-3 py-4 whitespace-nowrap text-center text-sm font-bold text-slate-900 col-name" onclick="event.stopPropagation()">
-                                <a href="{% url 'student_attendance_history' student.id %}?school={{ selected_school.id }}" class="hover:text-primary-600 hover:underline">
-                                    {{ student.name }}
-                                </a>
+                                <div class="flex items-center justify-between group/name">
+                                    <a href="{% url 'student_attendance_history' student.id %}?school={{ selected_school.id }}" class="hover:text-primary-600 hover:underline">
+                                        {{ student.name }}
+                                    </a>
+                                    <div class="flex items-center gap-0.5 ml-1">
+                                        <a href="{% url 'student_update' student.id %}" class="p-1 text-slate-400 hover:text-primary-600" title="수정">
+                                            <i class="ph-bold ph-pencil-simple text-base"></i>
+                                        </a>
+                                        <a href="sms:{{ student.phone }}" class="p-1 text-slate-400 hover:text-primary-600" title="문자">
+                                            <i class="ph-bold ph-chat-circle-text text-base"></i>
+                                        </a>
+                                    </div>
+                                </div>
                             </td>
 
                             <td id="attendance-cell-{{ student.id }}" class="px-3 py-4 whitespace-nowrap text-center col-action" onclick="event.stopPropagation()">
                                 <div class="flex justify-center items-center gap-1">
                                     {% with attendances|dict_get:student.id as attendance %}
                                     {% if attendance %}
-                                        {% if attendance.status == '종료처리' %}
+                                        {% if attendance.status|startswith:'종료처리' %}
                                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
                                                 <i class="ph-fill ph-check-circle"></i> 수업 종료
                                             </span>
-                                        {% elif attendance.status == '지각' %}
+                                        {% elif attendance.status|startswith:'지각' %}
                                             <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
                                                     class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm"
                                                     title="출석">
@@ -255,32 +265,45 @@
                                                 <span class="btn-text ml-1 text-xs">결석</span>
                                             </button>
 
-                                            <a href="/attendance/student/update/{{ student.id }}/"
-                                               class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
-                                               title="수정">
-                                                <i class="ph-bold ph-pencil-simple"></i>
-                                            </a>
-                                        {% elif attendance.status != '대기' and attendance.status != '취소' %}
                                             <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
                                                     class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors"
                                                     title="취소">
                                                 <i class="ph-bold ph-x"></i>
                                                 <span class="btn-text ml-1 text-xs">취소</span>
                                             </button>
+                                        {% elif not attendance.status|startswith:'대기' and not attendance.status|startswith:'취소' %}
+                                            <div class="flex justify-center items-center gap-2">
+                                                {% if attendance.status|startswith:'결석' %}
+                                                    <span class="text-xs text-red-600 font-bold bg-red-50 px-2 py-1 rounded border border-red-100">{{ attendance.absence_reason|default:"사유 없음" }}</span>
+                                                {% endif %}
 
-                                            <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')"
-                                                    class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
-                                                    title="종료">
-                                                <i class="ph-bold ph-stop"></i>
-                                                <span class="btn-text ml-1 text-xs">종료</span>
-                                            </button>
+                                                <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
+                                                        class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors"
+                                                        title="취소">
+                                                    <i class="ph-bold ph-x"></i>
+                                                    <span class="btn-text ml-1 text-xs">취소</span>
+                                                </button>
+                                            </div>
 
-                                            <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다."
-                                               class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors"
-                                               title="문자">
-                                                <i class="ph-bold ph-chat-circle-text"></i>
-                                                <span class="btn-text ml-1 text-xs">문자</span>
-                                            </a>
+                                            {% if not attendance.status|startswith:'결석' %}
+                                                <button onclick="endAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}', '{{ student.name }}', '{{ student.phone }}')"
+                                                        class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
+                                                        title="종료">
+                                                    <i class="ph-bold ph-stop"></i>
+                                                    <span class="btn-text ml-1 text-xs">종료</span>
+                                                </button>
+                                            {% endif %}
+
+                                            {% if not attendance.status|startswith:'결석' %}
+                                                {% if not attendance.status|contains:"(문자x)" %}
+                                                <a href="sms:{{ student.phone }}?body={{ student.name }}님 오늘 출석 확인되었습니다."
+                                                   class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors"
+                                                   title="문자">
+                                                    <i class="ph-bold ph-chat-circle-text"></i>
+                                                    <span class="btn-text ml-1 text-xs">문자</span>
+                                                </a>
+                                                {% endif %}
+                                            {% endif %}
                                         {% else %}
                                             <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
                                                     class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm"
@@ -302,12 +325,6 @@
                                                 <i class="ph-bold ph-x"></i>
                                                 <span class="btn-text ml-1 text-xs">결석</span>
                                             </button>
-
-                                            <a href="{% url 'student_update' student.id %}"
-                                               class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
-                                               title="수정">
-                                                <i class="ph-bold ph-pencil-simple"></i>
-                                            </a>
                                         {% endif %}
                                     {% else %}
                                         <button onclick="checkAttendance({{ student.id }}, '출석', 'attendance-cell-{{ student.id }}')"
@@ -330,12 +347,6 @@
                                             <i class="ph-bold ph-x"></i>
                                             <span class="btn-text ml-1 text-xs">결석</span>
                                         </button>
-
-                                        <a href="{% url 'student_update' student.id %}"
-                                           class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors"
-                                           title="수정">
-                                            <i class="ph-bold ph-pencil-simple"></i>
-                                        </a>
                                     {% endif %}
                                     {% endwith %}
                                 </div>
@@ -633,10 +644,10 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'ended') {
+            if (data.status === 'ended' || data.final_status) {
                 document.getElementById(rowId).innerHTML = `
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
-                        <i class="ph-fill ph-check-circle"></i> 수업 종료
+                        <i class="ph-fill ph-check-circle"></i> 수업 종료 ${data.final_status && data.final_status.includes("(문자x)") ? "(문자x)" : ""}
                     </span>
                 `;
             } else {
@@ -712,22 +723,44 @@
 
                 // Update UI based on status
                 // Using the new Tailwind button styles
-                if (status === '지각') {
+                if (status === '지각' || (data.attendance_status && data.attendance_status.includes('(문자x)') && data.attendance_status.includes('지각'))) {
                     document.getElementById(rowId).innerHTML = `
                         <div class="flex justify-center items-center gap-1">
                           <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm" title="출석"><i class="ph-bold ph-check"></i><span class="btn-text ml-1 text-xs">출석</span></button>
                           <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm" title="결석"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">결석</span></button>
-                          <a href="/attendance/student/update/${studentId}/" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="수정"><i class="ph-bold ph-pencil-simple"></i></a>
                         </div>
                     `;
                 } else {
-                    document.getElementById(rowId).innerHTML = `
-                        <div class="flex justify-center items-center gap-1">
-                          <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors" title="취소"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">취소</span></button>
-                          <button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="종료"><i class="ph-bold ph-stop"></i><span class="btn-text ml-1 text-xs">종료</span></button>
-                          <a href="${smsUrl}" class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors" title="문자"><i class="ph-bold ph-chat-circle-text"></i><span class="btn-text ml-1 text-xs">문자</span></a>
-                        </div>
-                    `;
+                    const finalStatus = data.attendance_status || status;
+                    
+                    if (finalStatus.includes('결석')) {
+                        const reason = data.absence_reason || '사유 없음';
+                        document.getElementById(rowId).innerHTML = `
+                            <div class="flex justify-center items-center gap-2">
+                                <span class="text-xs text-red-600 font-bold bg-red-50 px-2 py-1 rounded border border-red-100">${reason}</span>
+                                <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors" title="취소"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">취소</span></button>
+                            </div>
+                        `;
+                    } else {
+                        let smsBtn = '';
+                        if (data.send_sms && data.sms_message) {
+                            const finalSmsUrl = `sms:${phone}?body=${encodeURIComponent(data.sms_message)}`;
+                            smsBtn = `<a href="${finalSmsUrl}" class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors" title="문자"><i class="ph-bold ph-chat-circle-text"></i><span class="btn-text ml-1 text-xs">문자</span></a>`;
+                        }
+
+                        let endBtn = '';
+                        if (!finalStatus.includes('결석')) {
+                            endBtn = `<button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="종료"><i class="ph-bold ph-stop"></i><span class="btn-text ml-1 text-xs">종료</span></button>`;
+                        }
+
+                        document.getElementById(rowId).innerHTML = `
+                            <div class="flex justify-center items-center gap-1">
+                              <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors" title="취소"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">취소</span></button>
+                              ${endBtn}
+                              ${smsBtn}
+                            </div>
+                        `;
+                    }
                 }
             } else if (data.status === 'already_checked') {
                 if (!silent) {
@@ -813,7 +846,6 @@
                     <button onclick="checkAttendance(${studentId}, '출석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-colors shadow-sm" title="출석"><i class="ph-bold ph-check"></i><span class="btn-text ml-1 text-xs">출석</span></button>
                     <button onclick="checkAttendance(${studentId}, '지각', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-yellow-500 transition-colors shadow-sm" title="지각"><i class="ph-bold ph-clock"></i><span class="btn-text ml-1 text-xs">지각</span></button>
                     <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm" title="결석"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">결석</span></button>
-                    <a href="/attendance/student/update/${studentId}/" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-400 bg-white hover:text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="수정"><i class="ph-bold ph-pencil-simple"></i></a>
                   </div>
                 `;
             }
@@ -1141,18 +1173,37 @@
         });
     }
 
+    function getSmsSeparator() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        return (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) ? ';' : ',';
+    }
+
     function sendSmsToSelected() {
         const selectedRows = document.querySelectorAll('.student-checkbox:checked');
         if (selectedRows.length === 0) {
             alert('문자를 보낼 학생을 선택하세요.');
             return;
         }
-        const phoneNumbers = Array.from(selectedRows).map(cb => cb.closest('tr').dataset.phone).filter(Boolean);
+        const phoneNumbers = Array.from(selectedRows)
+            .map(cb => cb.closest('tr').dataset.phone)
+            .filter(Boolean)
+            .map(phone => phone.replace(/[^0-9]/g, ''));
+            
         if (phoneNumbers.length === 0) {
             alert('선택된 학생들의 전화번호 정보가 없습니다.');
             return;
         }
-        window.location.href = `sms:${phoneNumbers.join(',')}`;
+        
+        const separator = getSmsSeparator();
+        const phones = phoneNumbers.join(separator);
+        
+        // Android often requires different formats for multiple addresses
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (isAndroid && phoneNumbers.length > 1) {
+            window.location.href = `sms:${phones}?body=`;
+        } else {
+            window.location.href = `sms:${phones}`;
+        }
     }
 
     function sendSmsToAll() {
@@ -1161,12 +1212,25 @@
             alert('문자를 보낼 학생이 없습니다.');
             return;
         }
-        const phoneNumbers = Array.from(allStudentRows).map(row => row.dataset.phone).filter(Boolean);
+        const phoneNumbers = Array.from(allStudentRows)
+            .map(row => row.dataset.phone)
+            .filter(Boolean)
+            .map(phone => phone.replace(/[^0-9]/g, ''));
+            
         if (phoneNumbers.length === 0) {
             alert('학생들의 전화번호 정보가 없습니다.');
             return;
         }
-        window.location.href = `sms:${phoneNumbers.join(',')}`;
+        
+        const separator = getSmsSeparator();
+        const phones = phoneNumbers.join(separator);
+        
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (isAndroid && phoneNumbers.length > 1) {
+            window.location.href = `sms:${phones}?body=`;
+        } else {
+            window.location.href = `sms:${phones}`;
+        }
     }
 
     function endClassForDepartment(departmentName) {
