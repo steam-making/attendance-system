@@ -1198,6 +1198,19 @@
         return (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) ? ';' : ',';
     }
 
+    // ✅ Protocol URL Trigger Helper (Prevents ERR_UNKNOWN_URL_SCHEME in some Android WebViews)
+    function triggerProtocol(url) {
+        if (!url) return;
+        const link = document.createElement('a');
+        link.href = url;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+            document.body.removeChild(link);
+        }, 100);
+    }
+
     function sendSmsToSelected() {
         const selectedRows = document.querySelectorAll('.student-checkbox:checked');
         if (selectedRows.length === 0) {
@@ -1219,11 +1232,11 @@
         
         // Android often requires different formats for multiple addresses
         const isAndroid = /Android/i.test(navigator.userAgent);
+        let smsUrl = `sms:${phones}`;
         if (isAndroid && phoneNumbers.length > 1) {
-            window.location.href = `sms:${phones}?body=`;
-        } else {
-            window.location.href = `sms:${phones}`;
+            smsUrl = `sms:${phones}?body=`;
         }
+        triggerProtocol(smsUrl);
     }
 
     function sendSmsToAll() {
@@ -1246,11 +1259,11 @@
         const phones = phoneNumbers.join(separator);
         
         const isAndroid = /Android/i.test(navigator.userAgent);
+        let smsUrl = `sms:${phones}`;
         if (isAndroid && phoneNumbers.length > 1) {
-            window.location.href = `sms:${phones}?body=`;
-        } else {
-            window.location.href = `sms:${phones}`;
+            smsUrl = `sms:${phones}?body=`;
         }
+        triggerProtocol(smsUrl);
     }
 
     function endClassForDepartment(departmentName) {
@@ -1284,7 +1297,7 @@
             if (data.status === 'success') {
                 if (data.sms_uri) {
                     setTimeout(() => {
-                        window.location.href = data.sms_uri;
+                        triggerProtocol(data.sms_uri);
                     }, 100);
                 }
                 setTimeout(() => {
