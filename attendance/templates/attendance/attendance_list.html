@@ -61,6 +61,14 @@
   tr.selected-row td {
     background-color: #eff6ff !important; /* blue-50 */
   }
+
+  /* Hide the default marker for summary tags */
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary {
+    list-style: none;
+  }
 </style>
 {% endblock %}
 
@@ -134,41 +142,59 @@
             <p class="text-xs sm:text-sm text-slate-500">달력 버튼에서 날짜를 바꾸면 해당 날짜 기준으로 조회됩니다.</p>
         </div>
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-4">
-                <h4 class="text-sm font-semibold text-emerald-700">출석 리스트 ({{ daily_present_attendances|length }}명)</h4>
-                {% if daily_present_attendances %}
-                    <ul class="mt-2 space-y-1 text-sm text-slate-700">
-                        {% for attendance in daily_present_attendances %}
-                            <li>
-                                <a href="{% url 'student_attendance_history' attendance.student.id %}?school={{ selected_school.id }}" class="hover:text-primary-600 hover:underline">
-                                    {{ attendance.student.name }}
-                                </a>
-                                <span class="text-slate-500">({{ attendance.status }})</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="mt-2 text-sm text-slate-500">출석 기록이 없습니다.</p>
-                {% endif %}
-            </section>
+            <!-- 출석 리스트 (접이식) -->
+            <details class="group rounded-lg border border-emerald-100 bg-emerald-50/40 overflow-hidden">
+                <summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-emerald-100/50 transition-colors list-none">
+                    <h4 class="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+                        <i class="ph-bold ph-check-circle text-emerald-500"></i>
+                        출석 리스트 ({{ daily_present_attendances|length }}명)
+                    </h4>
+                    <i class="ph-bold ph-caret-down text-emerald-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="px-4 pb-4">
+                    {% if daily_present_attendances %}
+                        <ul class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-1 text-sm text-slate-700">
+                            {% for attendance in daily_present_attendances %}
+                                <li class="truncate py-0.5">
+                                    <a href="{% url 'student_attendance_history' attendance.student.id %}?school={{ selected_school.id }}" class="hover:text-primary-600 hover:underline">
+                                        {{ attendance.student.name }}
+                                    </a>
+                                    <span class="text-slate-400 text-[10px]">({{ attendance.status }})</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="mt-2 text-sm text-slate-500">출석 기록이 없습니다.</p>
+                    {% endif %}
+                </div>
+            </details>
 
-            <section class="rounded-lg border border-rose-100 bg-rose-50/40 p-4">
-                <h4 class="text-sm font-semibold text-rose-700">결석 리스트 ({{ daily_absent_attendances|length }}명)</h4>
-                {% if daily_absent_attendances %}
-                    <ul class="mt-2 space-y-1 text-sm text-slate-700">
-                        {% for attendance in daily_absent_attendances %}
-                            <li>
-                                <a href="{% url 'student_attendance_history' attendance.student.id %}?school={{ selected_school.id }}" class="hover:text-primary-600 hover:underline">
-                                    {{ attendance.student.name }}
-                                </a>
-                                <span class="text-slate-500">{{ attendance.absence_reason|default:"사유 없음" }}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="mt-2 text-sm text-slate-500">결석 기록이 없습니다.</p>
-                {% endif %}
-            </section>
+            <!-- 결석 리스트 (접이식) -->
+            <details class="group rounded-lg border border-rose-100 bg-rose-50/40 overflow-hidden">
+                <summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-rose-100/50 transition-colors list-none">
+                    <h4 class="text-sm font-semibold text-rose-700 flex items-center gap-2">
+                        <i class="ph-bold ph-warning-circle text-rose-500"></i>
+                        결석 리스트 ({{ daily_absent_attendances|length }}명)
+                    </h4>
+                    <i class="ph-bold ph-caret-down text-rose-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="px-4 pb-4">
+                    {% if daily_absent_attendances %}
+                        <ul class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-1 text-sm text-slate-700">
+                            {% for attendance in daily_absent_attendances %}
+                                <li class="truncate py-0.5">
+                                    <a href="{% url 'student_attendance_history' attendance.student.id %}?school={{ selected_school.id }}" class="hover:text-primary-600 hover:underline">
+                                        {{ attendance.student.name }}
+                                    </a>
+                                    <span class="text-slate-400 text-[10px]" title="{{ attendance.absence_reason|default:'사유 없음' }}">({{ attendance.absence_reason|default:"사유없음" }})</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="mt-2 text-sm text-slate-500">결석 기록이 없습니다.</p>
+                    {% endif %}
+                </div>
+            </details>
         </div>
     </div>
 
