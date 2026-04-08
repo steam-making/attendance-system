@@ -1,4 +1,28 @@
 {% extends 'base.html' %}
+
+{% block nav_school_selector %}
+    {% if selected_school %}
+    <form method="get" class="w-full max-w-xs pl-2">
+        <input type="hidden" name="daily_date" value="{{ daily_date_iso }}">
+        <div class="relative">
+            <select name="school" onchange="this.form.submit()" class="appearance-none block w-full pl-8 pr-8 py-1.5 text-sm border-slate-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md shadow-sm bg-slate-50">
+                {% for school in schools %}
+                    <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
+                        {{ school.name }} {{school.program_name}}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600">
+                <i class="ph-fill ph-buildings"></i>
+            </div>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                <i class="ph-bold ph-caret-down"></i>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+{% endblock %}
+
 {% block extra_head %}
 <style>
   /* Custom Table Styles for specific column widths */
@@ -44,34 +68,13 @@
 {% load static %}
 {% load extra_filters %}
 
-{% block nav_school_selector %}
-    {% if selected_school %}
-    <form method="get" class="w-full max-w-xs pl-2">
-        <input type="hidden" name="daily_date" value="{{ daily_date_iso }}">
-        <div class="relative">
-            <select name="school" onchange="this.form.submit()" class="appearance-none block w-full pl-8 pr-8 py-1.5 text-sm border-slate-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md shadow-sm bg-slate-50">
-                {% for school in schools %}
-                    <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
-                        {{ school.name }} {{school.program_name}}
-                    </option>
-                {% endfor %}
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600">
-                <i class="ph-fill ph-buildings"></i>
-            </div>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
-                <i class="ph-bold ph-caret-down"></i>
-            </div>
-        </div>
-    </form>
-    {% endif %}
-{% endblock %}
+
 
 <div class="max-w-5xl mx-auto space-y-6">
 
     {% if selected_school %}
-    <!-- Action Buttons (Sticky on mobile) -->
-    <div class="sticky top-16 z-40 bg-white/95 backdrop-blur-sm -mx-4 px-4 py-2 border-b border-slate-200 sm:relative sm:top-0 sm:mx-0 sm:px-0 sm:py-0 sm:border-0 sm:bg-transparent flex flex-row overflow-x-auto gap-2 items-center sm:flex-wrap sm:justify-start">
+    <!-- Action Buttons (Sticky Fixed) -->
+    <div class="sticky top-16 z-40 bg-white/95 backdrop-blur-sm -mx-4 px-4 py-2 border-b border-slate-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 flex flex-row overflow-x-auto gap-2 items-center sm:flex-wrap sm:justify-center">
             <button type="button" id="start-class-button" onclick="return startClass(event)" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
                 <i class="ph-bold {% if class_session_active %}ph-stop{% else %}ph-play{% endif %} sm:mr-1.5 start-class-icon text-lg sm:text-base"></i>
                 <span class="start-class-label hidden sm:inline">{% if class_session_active %}수업중{% else %}수업시작{% endif %}</span>
