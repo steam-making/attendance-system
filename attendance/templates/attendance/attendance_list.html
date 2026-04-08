@@ -175,9 +175,9 @@
     <!-- Departments Loop -->
     <div class="space-y-8">
         {% for department, students in departments.items %}
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-nowrap justify-between items-center gap-4 overflow-x-auto">
-                <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2 whitespace-nowrap shrink-0">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100">
+            <div class="px-3 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/95 backdrop-blur-sm flex flex-nowrap justify-between items-center gap-2 overflow-x-auto sticky top-[115px] z-30 shadow-sm">
+                <h4 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-1 sm:gap-2 whitespace-nowrap shrink-0">
                     <span class="w-2 h-6 bg-primary-500 rounded-full"></span>
                     {{ department }}
                     {% with department_time_labels|dict_get:department as dept_time %}
@@ -203,9 +203,9 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="w-full">
                 <table class="min-w-full divide-y divide-slate-200 student-table">
-                    <thead class="bg-slate-50">
+                    <thead class="bg-slate-50/95 backdrop-blur-sm sticky top-[175px] z-20 shadow-sm">
                         <tr>
                             <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider col-check whitespace-nowrap">
                                 <div class="flex justify-center">
