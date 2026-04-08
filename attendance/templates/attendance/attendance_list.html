@@ -44,70 +44,69 @@
 {% load static %}
 {% load extra_filters %}
 
+{% block nav_school_selector %}
+    {% if selected_school %}
+    <form method="get" class="w-full max-w-xs pl-2">
+        <input type="hidden" name="daily_date" value="{{ daily_date_iso }}">
+        <div class="relative">
+            <select name="school" onchange="this.form.submit()" class="appearance-none block w-full pl-8 pr-8 py-1.5 text-sm border-slate-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md shadow-sm bg-slate-50">
+                {% for school in schools %}
+                    <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
+                        {{ school.name }} {{school.program_name}}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-primary-600">
+                <i class="ph-fill ph-buildings"></i>
+            </div>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                <i class="ph-bold ph-caret-down"></i>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+{% endblock %}
+
 <div class="max-w-5xl mx-auto space-y-6">
 
     {% if selected_school %}
-    <!-- Top Controls -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-        
-        <!-- School Selector -->
-        <form method="get" class="w-full md:w-auto">
-            <input type="hidden" name="daily_date" value="{{ daily_date_iso }}">
-            <div class="relative">
-                <select name="school" onchange="this.form.submit()" class="appearance-none block w-full pl-10 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm">
-                    {% for school in schools %}
-                        <option value="{{ school.id }}" {% if selected_school.id == school.id %}selected{% endif %}>
-                            {{ school.name }} {{school.program_name}}
-                        </option>
-                    {% endfor %}
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                    <i class="ph-bold ph-buildings"></i>
-                </div>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
-                    <i class="ph-bold ph-caret-down"></i>
-                </div>
-            </div>
-        </form>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap justify-center gap-2 w-full md:w-auto">
-            <button type="button" id="start-class-button" onclick="return startClass(event)" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
-                <i class="ph-bold {% if class_session_active %}ph-stop{% else %}ph-play{% endif %} mr-1.5 start-class-icon"></i>
-                <span class="start-class-label">{% if class_session_active %}수업중{% else %}수업시작{% endif %}</span>
+    <!-- Action Buttons (Sticky on mobile) -->
+    <div class="sticky top-16 z-40 bg-white/95 backdrop-blur-sm -mx-4 px-4 py-2 border-b border-slate-200 sm:relative sm:top-0 sm:mx-0 sm:px-0 sm:py-0 sm:border-0 sm:bg-transparent flex flex-row overflow-x-auto gap-2 items-center sm:flex-wrap sm:justify-start">
+            <button type="button" id="start-class-button" onclick="return startClass(event)" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                <i class="ph-bold {% if class_session_active %}ph-stop{% else %}ph-play{% endif %} sm:mr-1.5 start-class-icon text-lg sm:text-base"></i>
+                <span class="start-class-label hidden sm:inline">{% if class_session_active %}수업중{% else %}수업시작{% endif %}</span>
             </button>
 
-            <button type="button" onclick="toggleModal('dailyAttendanceModal')" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors">
-                <i class="ph-bold ph-calendar-blank mr-1.5"></i>
-                달력조회
+            <button type="button" onclick="toggleModal('dailyAttendanceModal')" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors">
+                <i class="ph-bold ph-calendar-blank sm:mr-1.5 text-lg sm:text-base"></i>
+                <span class="hidden sm:inline">달력조회</span>
             </button>
 
-            <button type="button" onclick="sendSmsToAll()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors">
-                <i class="ph-bold ph-paper-plane-tilt mr-1.5"></i>
-                전체문자보내기
+            <button type="button" onclick="sendSmsToAll()" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors" title="전체문자보내기">
+                <i class="ph-bold ph-paper-plane-tilt sm:mr-1.5 text-lg sm:text-base"></i>
+                <span class="hidden sm:inline">전체문자보내기</span>
             </button>
 
-            <button type="button" onclick="sendSmsToSelected()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                <i class="ph-bold ph-chat-circle-dots mr-1.5"></i>
-                선택문자보내기
+            <button type="button" onclick="sendSmsToSelected()" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" title="선택문자보내기">
+                <i class="ph-bold ph-chat-circle-dots sm:mr-1.5 text-lg sm:text-base"></i>
+                <span class="hidden sm:inline">선택문자보내기</span>
             </button>
 
-             <button type="button" onclick="toggleModal('addStudentModal')" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                 <i class="ph-bold ph-user-plus mr-1.5"></i>
-                 학생 등록
+             <button type="button" onclick="toggleModal('addStudentModal')" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors" title="학생 등록">
+                 <i class="ph-bold ph-user-plus sm:mr-1.5 text-lg sm:text-base"></i>
+                 <span class="hidden sm:inline">학생 등록</span>
             </button>
 
-            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
-                <i class="ph-bold ph-file-xls mr-1.5"></i>
-                엑셀
+            <a href="{% url 'upload_students_excel' %}?school={{ selected_school.id }}" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors" title="엑셀등록">
+                <i class="ph-bold ph-file-xls sm:mr-1.5 text-lg sm:text-base"></i>
+                <span class="hidden sm:inline">엑셀등록</span>
             </a>
 
-            <button type="button" onclick="deleteSelectedStudents()" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                <i class="ph-bold ph-trash mr-1.5"></i>
-                삭제
+            <button type="button" onclick="deleteSelectedStudents()" class="inline-flex shrink-0 items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" title="삭제">
+                <i class="ph-bold ph-trash sm:mr-1.5 text-lg sm:text-base"></i>
+                <span class="hidden sm:inline">삭제</span>
             </button>
         </div>
-    </div>
 
     {% if messages %}
         <div class="space-y-2">
