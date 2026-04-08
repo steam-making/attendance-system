@@ -47,12 +47,9 @@
                         <a href="{% url 'school_sms_settings' school.id %}" class="inline-flex justify-center items-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors" title="문자설정" aria-label="{{ school.name }} 문자설정">
                             <i class="ph-bold ph-chat-circle-text" aria-hidden="true"></i>
                         </a>
-                        <form action="{% url 'delete_school' school.id %}" method="post" onsubmit="return confirm('정말 이 학교를 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.');" class="inline-block">
-                            {% csrf_token %}
-                            <button type="submit" class="inline-flex justify-center items-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-red-50 transition-colors" title="삭제">
-                                <i class="ph-bold ph-trash"></i>
-                            </button>
-                        </form>
+                        <button type="button" onclick="openDeleteModal('{{ school.name|escapejs }}', '{% url 'delete_school' school.id %}')" class="inline-flex justify-center items-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-red-50 transition-colors" title="삭제">
+                            <i class="ph-bold ph-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -73,4 +70,45 @@
         {% endfor %}
     </div>
 </div>
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="relative z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity"></div>
+  <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+      <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="ph-bold ph-warning text-red-600 text-xl"></i>
+            </div>
+            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+              <h3 class="text-base font-semibold leading-6 text-slate-900" id="modal-title">학교 삭제 확인</h3>
+              <div class="mt-2">
+                <p class="text-sm text-slate-500"><span id="deleteSchoolName" class="font-bold text-slate-700"></span> 학교를 정말 삭제하시겠습니까?<br>삭제된 모든 데이터(학생, 출석 기록 등)는 복구할 수 없습니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+          <form id="deleteForm" method="post" action="">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto">삭제</button>
+          </form>
+          <button type="button" onclick="closeDeleteModal()" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openDeleteModal(schoolName, deleteUrl) {
+    document.getElementById('deleteSchoolName').textContent = schoolName;
+    document.getElementById('deleteForm').action = deleteUrl;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+</script>
 {% endblock %}
