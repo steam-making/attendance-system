@@ -11,9 +11,26 @@
   .col-action { width: auto; }
 
   @media (max-width: 640px) {
-    .col-gbn { width: 25%; }
-    .col-name { width: 20%; }
+    .col-check { width: 32px; }
+    .col-gbn { width: 23%; font-size: 0.70rem; }
+    .col-name { width: 25%; font-size: 0.8rem; }
     .btn-text { display: none; }
+    
+    /* Reduce padding in table cells for mobile to prevent scroll */
+    .student-table th, .student-table td {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+    /* Squish the grade/class display slightly */
+    .col-gbn span {
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+        font-size: 0.65rem !important;
+    }
+    /* Make the action buttons a bit tighter */
+    .col-action button, .col-action a {
+        padding: 0.35rem !important;
+    }
   }
   
   /* Selected row highlight */
@@ -169,17 +186,17 @@
                     <span class="text-slate-500 text-sm font-normal whitespace-nowrap">({{ students|length }}명)</span>
                 </h4>
                 <div class="flex items-center whitespace-nowrap shrink-0">
-                    <button type="button" onclick="moveSelectedStudents()" class="inline-flex items-center px-3 py-1.5 mr-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors whitespace-nowrap">
-                        <i class="ph-bold ph-arrows-counter-clockwise mr-1"></i>
-                        부서이동
+                    <button type="button" onclick="moveSelectedStudents()" class="inline-flex items-center px-2 py-1.5 sm:px-3 mr-1 sm:mr-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition-colors whitespace-nowrap">
+                        <i class="ph-bold ph-arrows-counter-clockwise sm:mr-1"></i>
+                        <span class="btn-text">부서이동</span>
                     </button>
-                    <button type="button" onclick="markSelectedAsPresent('{{ department }}')" class="inline-flex items-center px-3 py-1.5 mr-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors whitespace-nowrap">
-                        <i class="ph-bold ph-check-circle mr-1"></i>
-                        선택출석
+                    <button type="button" onclick="markSelectedAsPresent('{{ department }}')" class="inline-flex items-center px-2 py-1.5 sm:px-3 mr-1 sm:mr-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition-colors whitespace-nowrap">
+                        <i class="ph-bold ph-check-circle sm:mr-1"></i>
+                        <span class="btn-text">선택출석</span>
                     </button>
-                    <button type="button" onclick="endClassForDepartment('{{ department }}')" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors whitespace-nowrap">
-                        <i class="ph-bold ph-door-open mr-1"></i>
-                        수업종료
+                    <button type="button" onclick="endClassForDepartment('{{ department }}')" class="inline-flex items-center px-2 py-1.5 sm:px-3 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none transition-colors whitespace-nowrap">
+                        <i class="ph-bold ph-door-open sm:mr-1"></i>
+                        <span class="btn-text">수업종료</span>
                     </button>
                 </div>
             </div>
