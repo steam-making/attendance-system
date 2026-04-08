@@ -659,7 +659,7 @@
                 'X-CSRFToken': csrfToken,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({ date: '{{ daily_date_iso }}' })
         })
         .then(response => response.json())
         .then(data => {
@@ -729,7 +729,8 @@
             body: JSON.stringify({
                 status: status,
                 program_name: '{{ selected_school.program_name }}',
-                absence_reason: status === '결석' ? finalReason : ''
+                absence_reason: status === '결석' ? finalReason : '',
+                date: '{{ daily_date_iso }}'
             })
         })
         .then(response => response.json())
@@ -855,7 +856,7 @@
                 'X-CSRFToken': '{{ csrf_token }}',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({ date: '{{ daily_date_iso }}' })
         })
         .then(response => response.json())
         .then(data => {
@@ -1272,7 +1273,8 @@
             },
             body: JSON.stringify({
                 department_name: departmentName,
-                school_id: schoolId
+                school_id: schoolId,
+                date: '{{ daily_date_iso }}'
             })
         })
         .then(response => response.json())

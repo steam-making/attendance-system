@@ -51,9 +51,20 @@ def update_today_attendance_status(request, student_id):
 def mark_attendance_end(request, student_id):
     if request.method == 'POST':
         student = get_object_or_404(Student, id=student_id, school__user=request.user)
-        today = timezone.localdate()
+        
+        # ✅ Get date from request body if available, else default to today
+        data = json.loads(request.body or "{}")
+        date_str = data.get('date')
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                target_date = timezone.localdate()
+        else:
+            target_date = timezone.localdate()
+
         try:
-            attendance = Attendance.objects.get(student=student, date=today)
+            attendance = Attendance.objects.get(student=student, date=target_date)
             user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
             
             status_to_save = '종료처리'
@@ -413,7 +424,18 @@ def upload_students_excel(request):
 def ajax_attendance_cancel(request, student_id):
     if request.method == 'POST':
         student = get_object_or_404(Student, id=student_id)
-        today = timezone.now().date()
+        
+        # ✅ Get date from request body if available, else default to today
+        data = json.loads(request.body or "{}")
+        date_str = data.get('date')
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                target_date = timezone.now().date()
+        else:
+            target_date = timezone.now().date()
+            
         user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
         send_sms = False
         sms_message = ""
@@ -430,7 +452,7 @@ def ajax_attendance_cancel(request, student_id):
         else:
             status_to_save = '취소(문자x)'
             
-        Attendance.objects.filter(student=student, date=today).update(status=status_to_save)
+        Attendance.objects.filter(student=student, date=target_date).update(status=status_to_save)
             
         return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': send_sms, 'sms_message': sms_message})
     return JsonResponse({'status': 'invalid'})
@@ -441,17 +463,26 @@ from django.views.decorators.csrf import csrf_exempt
 @login_required
 def ajax_attendance_check(request, student_id):
     student = get_object_or_404(Student, id=student_id, school__user=request.user)
-    today = timezone.localdate()
 
     if request.method == 'POST':
         data = json.loads(request.body or "{}")
+        
+        # ✅ Get date from request body if available, else default to today
+        date_str = data.get('date')
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                target_date = timezone.localdate()
+        else:
+            target_date = timezone.localdate()
         status = data.get('status', '출석')
         program = data.get('program_name')
         absence_reason = (data.get('absence_reason') or '').strip()
         if status != '결석':
             absence_reason = ''
 
-        existing_attendance = Attendance.objects.filter(student=student, date=today).first()
+        existing_attendance = Attendance.objects.filter(student=student, date=target_date).first()
         if existing_attendance and existing_attendance.status in ['출석', '결석', '종료처리']:
             return JsonResponse({'status': 'already_checked'})
 
@@ -493,7 +524,7 @@ def ajax_attendance_check(request, student_id):
                 status=status,
                 absence_reason=absence_reason or None,
                 program=program,
-                date=today
+                date=target_date
             )
 
         created_time = timezone.localtime(attendance.created_at).strftime('%H:%M:%S')
@@ -677,11 +708,11 @@ def attendance_list(request):
             is_active=True
         ).exists()
 
-    # ✅ (권장) 선택된 학교의 학생들만 오늘 출석 가져오기
+    # ✅ (권장) 선택된 학교의 학생들만 해당 날짜 출석 가져오기
     #    학교가 없으면 빈 dict
     if selected_school:
         attendances_qs = Attendance.objects.filter(
-            date=today,
+            date=daily_target_date,
             student__school=selected_school
         )
     else:
@@ -781,7 +812,16 @@ def end_class(request):
         data = json.loads(request.body)
         department_name = data.get('department_name')
         school_id = data.get('school_id')
-        today = timezone.now().date()
+        
+        # ✅ Get date from request body if available, else default to today
+        date_str = data.get('date')
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                target_date = timezone.now().date()
+        else:
+            target_date = timezone.now().date()
 
         if not department_name or not school_id:
             return JsonResponse({'status': 'error', 'message': '필수 정보가 누락되었습니다.'}, status=400)
@@ -792,7 +832,7 @@ def end_class(request):
         attendances_to_end = Attendance.objects.filter(
             student__school=school,
             student__department=department_name,
-            date=today,
+            date=target_date,
             status='출석'
         )
 
