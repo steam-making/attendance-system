@@ -69,32 +69,40 @@ class Command(BaseCommand):
                 end_dt = timezone.make_aware(datetime.combine(today, end_time), tz)
                 lateness_dt = start_dt + timedelta(minutes=10)
 
-                if settings.send_lateness_sms and settings.auto_send_lateness_sms and _time_matches(now, lateness_dt.time()):
+                if settings.auto_send_lateness_sms and _time_matches(now, lateness_dt.time()):
+                    status_to_save = '지각'
+                    if not settings.send_lateness_sms:
+                        status_to_save = '지각(문자x)'
+                    
                     students = Student.objects.filter(school=school, department=department)
                     student_ids = list(students.values_list('id', flat=True))
                     if student_ids:
                         existing_qs = Attendance.objects.filter(date=today, student_id__in=student_ids)
                         existing_ids = set(existing_qs.values_list('student_id', flat=True))
-                        updated_count = existing_qs.filter(status__in=['대기', '취소']).update(status='지각')
+                        updated_count = existing_qs.filter(status__in=['대기', '취소']).update(status=status_to_save)
                         missing_ids = [student_id for student_id in student_ids if student_id not in existing_ids]
                         Attendance.objects.bulk_create(
-                            [Attendance(student_id=student_id, date=today, status='지각') for student_id in missing_ids]
+                            [Attendance(student_id=student_id, date=today, status=status_to_save) for student_id in missing_ids]
                         )
                         processed_any = True
                         self.stdout.write(
-                            f"[{now:%H:%M}] 지각 처리: {school.name} {department} updated={updated_count} created={len(missing_ids)}"
+                            f"[{now:%H:%M}] {status_to_save} 처리: {school.name} {department} updated={updated_count} created={len(missing_ids)}"
                         )
 
-                if settings.send_class_end_sms and settings.auto_send_class_end_sms and _time_matches(now, end_dt.time()):
+                if settings.auto_send_class_end_sms and _time_matches(now, end_dt.time()):
+                    status_to_save = '종료처리'
+                    if not settings.send_class_end_sms:
+                        status_to_save = '종료처리(문자x)'
+                        
                     ended_count = Attendance.objects.filter(
                         date=today,
                         student__school=school,
                         student__department=department,
                         status='출석'
-                    ).update(status='종료처리')
+                    ).update(status=status_to_save)
                     processed_any = True
                     self.stdout.write(
-                        f"[{now:%H:%M}] 종료 처리: {school.name} {department} ended={ended_count}"
+                        f"[{now:%H:%M}] {status_to_save} 처리: {school.name} {department} ended={ended_count}"
                     )
 
             if not processed_any:

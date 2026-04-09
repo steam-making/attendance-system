@@ -119,6 +119,9 @@ def attendance_check_api(request):
     raw_status = request.data.get("status", "출석")
     normalized_status = status_map.get(raw_status, raw_status)
 
+    student = Student.objects.get(id=student_id)
+    user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
+
     today = timezone.localdate()
     obj, created = Attendance.objects.get_or_create(
         student_id=student_id,
@@ -128,6 +131,11 @@ def attendance_check_api(request):
     if not created:
         obj.status = normalized_status
         obj.save()
+    else:
+        # If it was created with a status that might have changed to (문자x)
+        # we need to ensure the saved status is the normalized/modified one.
+        obj.status = normalized_status
+        obj.save()
     student = Student.objects.get(id=student_id)
     user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
 
@@ -135,20 +143,40 @@ def attendance_check_api(request):
     sms_message = ""
 
     if normalized_status == "출석":
-        sms_message = resolve_and_render_message(student.school, "출석", student.name, user_settings)
-        send_sms = True
+        if user_settings.send_attendance_sms:
+            sms_message = resolve_and_render_message(student.school, "출석", student.name, user_settings)
+            send_sms = True
+        else:
+            normalized_status = "출석(문자x)"
     elif normalized_status == "지각":
-        sms_message = resolve_and_render_message(student.school, "지각", student.name, user_settings)
-        send_sms = True
+        if user_settings.send_lateness_sms:
+            sms_message = resolve_and_render_message(student.school, "지각", student.name, user_settings)
+            send_sms = True
+        else:
+            normalized_status = "지각(문자x)"
     elif normalized_status == "결석":
-        sms_message = resolve_and_render_message(student.school, "결석", student.name, user_settings)
-        send_sms = True
+        if user_settings.send_absence_sms:
+            sms_message = resolve_and_render_message(student.school, "결석", student.name, user_settings)
+            send_sms = True
+        else:
+            normalized_status = "결석(문자x)"
     elif normalized_status == "취소":
-        sms_message = resolve_and_render_message(student.school, "취소", student.name, user_settings)
-        send_sms = True
+        if user_settings.send_cancel_sms:
+            sms_message = resolve_and_render_message(student.school, "취소", student.name, user_settings)
+            send_sms = True
+        else:
+            normalized_status = "취소(문자x)"
     elif normalized_status == "종료처리":
-        sms_message = resolve_and_render_message(student.school, "종료처리", student.name, user_settings)
-        send_sms = True
+        if user_settings.send_class_end_sms:
+            sms_message = resolve_and_render_message(student.school, "종료처리", student.name, user_settings)
+            send_sms = True
+        else:
+            normalized_status = "종료처리(문자x)"
+
+    # Final save to ensure (문자x) is in the DB if needed
+    if obj.status != normalized_status:
+        obj.status = normalized_status
+        obj.save(update_fields=['status'])
 
     return Response(
         {
@@ -187,8 +215,18 @@ def attendance_end_api(request):
     student = Student.objects.get(id=student_id)
     user_settings, _ = Setting.objects.get_or_create(user=student.school.user)
 
-    sms_message = resolve_and_render_message(student.school, "종료처리", student.name, user_settings)
-    send_sms = True
+    status_to_save = "종료처리"
+    send_sms = False
+    sms_message = ""
+
+    if user_settings.send_class_end_sms:
+        sms_message = resolve_and_render_message(student.school, "종료처리", student.name, user_settings)
+        send_sms = True
+    else:
+        status_to_save = "종료처리(문자x)"
+
+    obj.status = status_to_save
+    obj.save(update_fields=['status'])
 
     return Response(
         {

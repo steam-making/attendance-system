@@ -731,7 +731,7 @@
     }
 
     function checkAttendance(studentId, status, rowId, silent = false, absenceReason = null) {
-        if (!classSessionActive) {
+        if (!classSessionActive && status !== '결석') {
             if (!silent) {
                 alert('수업시작 후 출석 체크가 가능합니다.');
             }
@@ -952,7 +952,13 @@
 
     function setAttendanceControlsActive(active) {
         document.querySelectorAll('button[onclick*="checkAttendance"]').forEach((button) => {
-            setButtonDisabledState(button, !active);
+            // '결석' 버튼은 수업 시작 전이라도 활성 상태를 유지함
+            const isAbsenceButton = button.getAttribute('onclick').includes("'결석'");
+            if (isAbsenceButton) {
+                setButtonDisabledState(button, false);
+            } else {
+                setButtonDisabledState(button, !active);
+            }
         });
 
         document.querySelectorAll('button[onclick*="markSelectedAsPresent"]').forEach((button) => {

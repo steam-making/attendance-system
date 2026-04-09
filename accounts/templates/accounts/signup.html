@@ -135,6 +135,33 @@
                     </button>
                 </div>
             </form>
+
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm font-medium leading-6">
+                        <span class="bg-white px-4 text-slate-500">또는 소셜 계정으로 가입</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    {% load socialaccount %}
+                    
+                    {# 구글 가입 버튼 #}
+                    <a href="{% provider_login_url 'google' %}" class="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-all">
+                        <i class="ph-fill ph-google-logo text-xl text-[#EA4335]"></i>
+                        <span class="text-sm">Google</span>
+                    </a>
+
+                    {# 카카오 가입 버튼 #}
+                    <a href="{% provider_login_url 'kakao' %}" class="flex w-full items-center justify-center gap-3 rounded-md bg-[#FEE500] px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-[#FADA0A] transition-all">
+                        <i class="ph-fill ph-chat-circle text-xl"></i>
+                        <span class="text-sm">Kakao</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 

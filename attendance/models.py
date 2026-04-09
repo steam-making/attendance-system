@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.utils import timezone
 
 class School(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -79,14 +80,20 @@ class Attendance(models.Model):
     STATUS_CHOICES = [
         ('대기', '대기'),
         ('출석', '출석'),
+        ('출석(문자x)', '출석(문자x)'),
         ('지각', '지각'),
+        ('지각(문자x)', '지각(문자x)'),
         ('결석', '결석'),
+        ('결석(문자x)', '결석(문자x)'),
         ('취소', '취소'),
+        ('취소(문자x)', '취소(문자x)'),
+        ('종료처리', '종료처리'),
+        ('종료처리(문자x)', '종료처리(문자x)'),
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='출석')  # ✅ 추가
+    date = models.DateField(default=timezone.localdate)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='출석')  # ✅ 길이 확장 및 항목 추가
     absence_reason = models.CharField(max_length=200, null=True, blank=True, verbose_name="결석 사유")
     program = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # ✅ 출석 시간

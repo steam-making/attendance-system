@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),  # accounts 앱 URL 포함
     path('accounts/', include('django.contrib.auth.urls')),  # 로그인/로그아웃 URL 추가
+    path('accounts/', include('allauth.urls')),  # ✅ 소셜 로그인 등 추가 기능 연결
     path('attendance/', include('attendance.urls')),  # ✅ 출결 체크 연결
 ]  
