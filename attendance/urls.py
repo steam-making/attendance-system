@@ -41,6 +41,11 @@ urlpatterns = [
     # ✅ 학생
     # =========================
     path('student/create/', views.student_create, name='student_create'),
+
+    # =========================
+    # ✅ 학생
+    # =========================
+    path('student/create/', views.student_create, name='student_create'),
     path('student/update/<int:pk>/', views.student_update, name='student_update'),
     path('student/<int:pk>/history/', views.student_attendance_history, name='student_attendance_history'),
     path('student/delete/<int:pk>/', views.delete_student, name='delete_student'),
@@ -48,6 +53,7 @@ urlpatterns = [
 
     path('students/delete_selected/', delete_selected_students, name='delete_selected_students'),
     path('students/upload/', upload_students_excel, name='upload_students_excel'),
+    path('students/upload/template/', views.download_student_excel_template, name='download_student_excel_template'),
     path('students/move/', views.move_students, name='move_students'),
     path('class/end/', views.end_class, name='end_class'),
 

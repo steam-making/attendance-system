@@ -420,6 +420,28 @@ def upload_students_excel(request):
     })
 
 
+@login_required
+def download_student_excel_template(request):
+    wb = openpyxl.Workbook()
+    sheet = wb.active
+    sheet.title = "학생등록_양식"
+
+    # 헤더 설정 (부서, 학년, 반, 번호, 이름, 전화번호)
+    headers = ['부서', '학년', '반', '번호', '이름', '전화번호']
+    sheet.append(headers)
+
+    # 샘플 데이터 (선택 사항)
+    sample_data = ['1부', 1, 1, 1, '홍길동', '01012345678']
+    sheet.append(sample_data)
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename=student_upload_template.xlsx'
+    wb.save(response)
+    return response
+
+
 @csrf_exempt
 def ajax_attendance_cancel(request, student_id):
     if request.method == 'POST':
