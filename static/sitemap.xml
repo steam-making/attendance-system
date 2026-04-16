@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- 메인 페이지 -->
+    <url>
+        <loc>https://api.medutech.kr/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <!-- 요금제 -->
+    <url>
+        <loc>https://api.medutech.kr/pricing/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <!-- 이용약관 -->
+    <url>
+        <loc>https://api.medutech.kr/terms/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <!-- 개인정보처리방침 -->
+    <url>
+        <loc>https://api.medutech.kr/privacy/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <!-- 환불 정책 -->
+    <url>
+        <loc>https://api.medutech.kr/refund/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <!-- 로그인 -->
+    <url>
+        <loc>https://api.medutech.kr/accounts/login/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <!-- 회원가입 -->
+    <url>
+        <loc>https://api.medutech.kr/accounts/signup/</loc>
+        <lastmod>2025-04-16</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+</urlset>

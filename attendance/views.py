@@ -280,7 +280,8 @@ def auto_process_attendance(request):
         start_dt = timezone.make_aware(datetime.combine(today, start_time), tz)
         end_dt = timezone.make_aware(datetime.combine(today, end_time), tz)
 
-        if settings.auto_send_lateness_sms and now >= (start_dt + timedelta(minutes=10)):
+        # ✅ 자동화 기능은 Pro 전용
+        if request.user.can_use_automation and settings.auto_send_lateness_sms and now >= (start_dt + timedelta(minutes=10)):
             students = Student.objects.filter(school=school, department=department)
             student_ids = list(students.values_list('id', flat=True))
             if student_ids:
@@ -296,7 +297,8 @@ def auto_process_attendance(request):
                     'created': len(missing_ids)
                 }
 
-        if settings.auto_send_class_end_sms and now >= end_dt:
+        # ✅ 자동화 기능은 Pro 전용
+        if request.user.can_use_automation and settings.auto_send_class_end_sms and now >= end_dt:
             ended_count = Attendance.objects.filter(
                 date=today,
                 student__school=school,
@@ -355,13 +357,15 @@ def register_student(request):
 @login_required
 def select_school(request):
     user = request.user
-    schools = School.objects.filter(user=user)
+    schools = School.objects.filter(user=user).order_by('id')  # 등록 순서대로
 
     color_list = ["#e6f2ff", "#e8f7e4", "#fff9e6", "#f0f4ff", "#f9f9f9"]
     school_colors = {}
 
+    # 🔹 등급별 활성/비활성 처리: school_limit 이내만 활성
     for i, school in enumerate(schools):
         school_colors[school.id] = color_list[i % len(color_list)]
+        school.is_active = i < user.school_limit  # Free=1개, Pro=5개
 
     if request.method == 'POST':
         selected_id = request.POST.get('school')
@@ -374,6 +378,12 @@ def select_school(request):
 
 @login_required
 def register_school(request):
+    # ✅ 학교 생성 제한 (Free: 1개, Pro: 5개)
+    current_school_count = School.objects.filter(user=request.user).count()
+    if current_school_count >= request.user.school_limit:
+        messages.warning(request, f"현재 등급에서는 최대 {request.user.school_limit}개의 학교만 등록할 수 있습니다. 더 많은 학교를 운영하시려면 Pro로 업그레이드하세요!", extra_tags='pricing_modal')
+        return redirect('select_school')
+
     if request.method == 'POST':
         form = SchoolForm(request.POST)
         if form.is_valid():
@@ -397,10 +407,22 @@ def upload_students_excel(request):
     if request.method == 'POST' and request.FILES.get('file'):
         excel_file = request.FILES['file']
         wb = openpyxl.load_workbook(excel_file)
-        sheet = wb.active
+        # ✅ 학생 수 제한 확인 (학교당 80명)
+        current_student_count = Student.objects.filter(school=selected_school).count()
+        remaining_slots = request.user.student_limit_per_school - current_student_count
 
+        if remaining_slots <= 0:
+            messages.warning(request, f"학교당 최대 {request.user.student_limit_per_school}명까지만 등록 가능합니다. 무제한 등록을 위해 Pro로 업그레이드하세요!", extra_tags='pricing_modal')
+            return redirect(f"/attendance/students/upload/?school={selected_school.id}")
+
+        added_count = 0
         for row in sheet.iter_rows(min_row=2, values_only=True):
+            if added_count >= remaining_slots:
+                messages.warning(request, f"최대 인원(80명) 제한으로 인해 일부 학생만 등록되었습니다.")
+                break
+
             department, grade, classroom, number, name, phone = row
+            if not name: continue
 
             Student.objects.create(
                 school=selected_school,
@@ -411,8 +433,9 @@ def upload_students_excel(request):
                 name=name,
                 phone=phone
             )
+            added_count += 1
 
-        messages.success(request, "학생 엑셀 업로드가 완료되었습니다.")
+        messages.success(request, f"학생 {added_count}명의 엑셀 업로드가 완료되었습니다.")
         return redirect(f"/attendance/?school={selected_school.id}")
 
     return render(request, 'attendance/upload_excel.html', {
@@ -615,6 +638,14 @@ def student_create(request):
             return JsonResponse({'status': 'error', 'message': '학교를 찾을 수 없습니다.'}, status=400)
         return redirect('select_school')
 
+    # ✅ 학생 수 제한 확인 (학교당 80명)
+    current_student_count = Student.objects.filter(school=selected_school).count()
+    if current_student_count >= request.user.student_limit_per_school:
+        messages.warning(request, f"학교당 최대 {request.user.student_limit_per_school}명까지만 등록 가능합니다. 더 많은 학생 관리가 필요하시면 Pro로 업그레이드하세요!", extra_tags='pricing_modal')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': '인원 제한 도달 (80명). Pro 업그레이드 권장.', 'is_limit_error': True}, status=403)
+        return redirect(f"/attendance/?school={selected_school.id}")
+
     if request.method == 'POST':
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             import json
@@ -684,6 +715,14 @@ def attendance_list(request):
         ).first()
     else:
         selected_school = schools.first()
+
+    # 🔹 [보안] 비활성 학교 접근 차단
+    if selected_school:
+        active_school_ids = list(schools.order_by('id').values_list('id', flat=True)[:request.user.school_limit])
+        if selected_school.id not in active_school_ids:
+            from django.contrib import messages
+            messages.warning(request, "해당 학교는 현재 비활성 상태입니다. Pro로 업그레이드하면 다시 이용할 수 있습니다.", extra_tags='pricing_modal')
+            return redirect('select_school')
 
     if selected_school and selected_school.departments:
         department_options = [
@@ -886,11 +925,16 @@ def end_class(request):
 def ajax_update_setting(request):
     try:
         data = json.loads(request.body)
-        field = data.get('field')
-        value = data.get('value')
-        
         if not field:
             return JsonResponse({'status': 'error', 'message': 'Field name is required.'}, status=400)
+
+        # ✅ 보안: 자동화 설정은 Pro 유저만 변경 가능
+        pro_only_fields = ['auto_send_lateness_sms', 'auto_send_class_end_sms']
+        if field in pro_only_fields and not request.user.can_use_automation:
+            return JsonResponse({
+                'status': 'error', 
+                'message': '자동화 설정은 Pro 멤버십 전용 기능입니다.'
+            }, status=403)
             
         settings, _ = Setting.objects.get_or_create(user=request.user)
         
@@ -905,3 +949,23 @@ def ajax_update_setting(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON.'}, status=400)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+def pricing_page(request):
+    import os
+    context = {
+        'PORTONE_SHOP_ID': os.getenv("PORTONE_SHOP_ID", "imp12345678")
+    }
+    return render(request, 'attendance/pricing.html', context)
+
+def terms_page(request):
+    """이용약관 페이지"""
+    return render(request, 'attendance/terms.html')
+
+def privacy_page(request):
+    """개인정보처리방침 페이지"""
+    return render(request, 'attendance/privacy.html')
+
+def refund_page(request):
+    """환불 정책 페이지"""
+    return render(request, 'attendance/refund.html')

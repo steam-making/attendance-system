@@ -94,26 +94,54 @@
             </div>
 
             <!-- Automation Settings -->
-            <div class="bg-white shadow sm:rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">자동화 설정</h3>
-                    <div class="mt-6 space-y-6">
+            <div class="bg-white shadow sm:rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:p-6 {% if not user.is_pro %}bg-slate-50 opacity-90{% endif %}">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center gap-2">
+                            자동화 설정
+                            {% if not user.is_pro %}
+                            <span class="inline-flex items-center rounded-md bg-indigo-100 px-2 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">PRO</span>
+                            {% endif %}
+                        </h3>
+                    </div>
+                    
+                    {% if not user.is_pro %}
+                    <div class="bg-indigo-50 border-l-4 border-indigo-400 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="ph-fill ph-lock-key text-indigo-400 text-xl"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-indigo-700">
+                                    자동 지각/종료 문자는 <strong class="font-bold">Pro 멤버십</strong> 전용 기능입니다.
+                                    <a href="{% url 'pricing' %}" class="underline font-bold hover:text-indigo-800 ml-1">지금 업그레이드하기 →</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="space-y-6">
                         <div class="relative flex items-start">
                             <div class="flex items-center h-5">
-                                {{ form.auto_send_lateness_sms }}
+                                <input type="checkbox" name="auto_send_lateness_sms" id="id_auto_send_lateness_sms" 
+                                       {% if form.initial.auto_send_lateness_sms %}checked{% endif %}
+                                       {% if not user.is_pro %}disabled class="rounded h-4 w-4 border-gray-300 text-gray-400 cursor-not-allowed"{% else %}class="rounded h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"{% endif %}>
                             </div>
                             <div class="ml-3 text-sm">
-                                <label for="{{ form.auto_send_lateness_sms.id_for_label }}" class="font-medium text-gray-700">자동 지각 문자 보내기</label>
-                                <p class="text-gray-500">학생이 지각으로 처리될 때 자동으로 문자를 보냅니다.</p>
+                                <label for="id_auto_send_lateness_sms" class="font-medium {% if not user.is_pro %}text-gray-400{% else %}text-gray-700{% endif %}">자동 지각 문자 보내기</label>
+                                <p class="{% if not user.is_pro %}text-gray-300{% else %}text-gray-500{% endif %}">학생이 지각으로 처리될 때 자동으로 문자를 보냅니다.</p>
                             </div>
                         </div>
                         <div class="relative flex items-start">
                             <div class="flex items-center h-5">
-                                {{ form.auto_send_class_end_sms }}
+                                <input type="checkbox" name="auto_send_class_end_sms" id="id_auto_send_class_end_sms"
+                                       {% if form.initial.auto_send_class_end_sms %}checked{% endif %}
+                                       {% if not user.is_pro %}disabled class="rounded h-4 w-4 border-gray-300 text-gray-400 cursor-not-allowed"{% else %}class="rounded h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"{% endif %}>
                             </div>
                             <div class="ml-3 text-sm">
-                                <label for="{{ form.auto_send_class_end_sms.id_for_label }}" class="font-medium text-gray-700">자동 종료 문자 보내기</label>
-                                <p class="text-gray-500">'수업종료' 버튼을 눌렀을 때 출석한 학생들에게 자동으로 문자를 보냅니다.</p>
+                                <label for="id_auto_send_class_end_sms" class="font-medium {% if not user.is_pro %}text-gray-400{% else %}text-gray-700{% endif %}">자동 종료 문자 보내기</label>
+                                <p class="{% if not user.is_pro %}text-gray-300{% else %}text-gray-500{% endif %}">'수업종료' 버튼을 눌렀을 때 출석한 학생들에게 자동으로 문자를 보냅니다.</p>
                             </div>
                         </div>
                     </div>
@@ -165,21 +193,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 value: value
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 403) {
+                return response.json().then(data => {
+                    togglePricingModal(true, data.message);
+                    throw new Error('Forbidden');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             element.style.opacity = '1';
             if (data.status === 'success') {
                 console.log(`Setting ${field} saved successfully.`);
-                // Optional: show a small toast or success indicator
-            } else {
-                console.error(`Error saving setting ${field}:`, data.message);
-                alert('설정 저장 중 오류가 발생했습니다: ' + data.message);
             }
         })
         .catch(error => {
             element.style.opacity = '1';
-            console.error('Fetch error:', error);
-            alert('네트워크 오류가 발생했습니다.');
+            if (error.message !== 'Forbidden') {
+                console.error('Fetch error:', error);
+                alert('설정 저장 중 오류가 발생했습니다.');
+            }
         });
     }
 });

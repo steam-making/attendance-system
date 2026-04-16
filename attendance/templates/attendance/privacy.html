@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}개인정보처리방침 - 출첵마스터{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-4">
+    <h1 class="text-3xl font-extrabold text-slate-900 mb-8">개인정보처리방침</h1>
+    
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-8 text-sm text-slate-700 leading-relaxed">
+
+        <p>메듀테크(이하 "회사")는 「개인정보 보호법」 제30조에 따라 정보주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.</p>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제1조 (개인정보의 처리 목적)</h2>
+            <p>회사는 다음의 목적을 위하여 개인정보를 처리합니다.</p>
+            <ul class="list-disc ml-5 mt-2 space-y-1">
+                <li><strong>회원가입 및 관리:</strong> 회원 가입의사 확인, 본인 식별·인증, 회원자격 유지·관리</li>
+                <li><strong>서비스 제공:</strong> 출결 관리, 학생 정보 관리, 문자 발송 서비스 제공</li>
+                <li><strong>유료 서비스 결제:</strong> 결제 처리, 요금 청구, 환불 처리</li>
+                <li><strong>고충 처리:</strong> 민원인의 신원 확인, 민원사항 확인, 처리결과 통보</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제2조 (수집하는 개인정보 항목)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse mt-2">
+                    <thead>
+                        <tr class="bg-slate-50">
+                            <th class="border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">구분</th>
+                            <th class="border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">수집 항목</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-slate-200 px-4 py-2">회원가입</td>
+                            <td class="border border-slate-200 px-4 py-2">아이디, 비밀번호, 이름, 이메일, 전화번호</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-200 px-4 py-2">서비스 이용</td>
+                            <td class="border border-slate-200 px-4 py-2">학생 이름, 학생 전화번호, 출결 기록</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-200 px-4 py-2">결제</td>
+                            <td class="border border-slate-200 px-4 py-2">결제 수단 정보, 결제 금액, 결제 일시</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-200 px-4 py-2">자동 수집</td>
+                            <td class="border border-slate-200 px-4 py-2">IP 주소, 접속 일시, 브라우저 종류</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제3조 (개인정보의 보유 및 이용 기간)</h2>
+            <ul class="list-disc ml-5 space-y-1">
+                <li>회원 탈퇴 시까지 (탈퇴 후 즉시 파기)</li>
+                <li>단, 관계 법령에 의한 보존 의무가 있는 경우 해당 기간 동안 보존합니다.
+                    <ul class="list-disc ml-5 mt-1 space-y-1">
+                        <li>계약 또는 청약철회 등에 관한 기록: 5년</li>
+                        <li>대금결제 및 재화 등의 공급에 관한 기록: 5년</li>
+                        <li>소비자의 불만 또는 분쟁처리에 관한 기록: 3년</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제4조 (개인정보의 제3자 제공)</h2>
+            <p>회사는 원칙적으로 이용자의 개인정보를 제3자에게 제공하지 않습니다. 다만, 다음의 경우에는 예외로 합니다.</p>
+            <ul class="list-disc ml-5 mt-2 space-y-1">
+                <li>이용자가 사전에 동의한 경우</li>
+                <li>법령의 규정에 의거하거나, 수사 목적으로 법령에 정해진 절차와 방법에 따라 수사기관의 요구가 있는 경우</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제5조 (개인정보 처리의 위탁)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse mt-2">
+                    <thead>
+                        <tr class="bg-slate-50">
+                            <th class="border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">수탁업체</th>
+                            <th class="border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600">위탁 업무</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-slate-200 px-4 py-2">포트원(PortOne)</td>
+                            <td class="border border-slate-200 px-4 py-2">결제 처리 및 빌링 관리</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-200 px-4 py-2">카카오페이</td>
+                            <td class="border border-slate-200 px-4 py-2">간편 결제 서비스 제공</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제6조 (이용자의 권리·의무 및 행사방법)</h2>
+            <p>이용자는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다.</p>
+            <ul class="list-disc ml-5 mt-2 space-y-1">
+                <li>개인정보 열람 요구</li>
+                <li>오류 등이 있을 경우 정정 요구</li>
+                <li>삭제 요구</li>
+                <li>처리정지 요구</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제7조 (개인정보의 안전성 확보 조치)</h2>
+            <p>회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.</p>
+            <ul class="list-disc ml-5 mt-2 space-y-1">
+                <li>비밀번호의 암호화 저장 및 관리</li>
+                <li>해킹 등에 대비한 기술적 대책 (SSL 암호화 통신)</li>
+                <li>개인정보에 대한 접근 제한</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-slate-900 mb-3">제8조 (개인정보 보호책임자)</h2>
+            <div class="bg-slate-50 rounded-lg p-4 mt-2">
+                <p><strong>개인정보 보호책임자</strong></p>
+                <p>이메일: privacy@medutech.kr</p>
+                <p class="mt-2 text-xs text-slate-400">개인정보 관련 문의사항은 위 이메일로 연락해 주시기 바랍니다.</p>
+            </div>
+        </section>
+
+        <div class="pt-6 border-t border-slate-200 text-xs text-slate-400">
+            <p>시행일자: 2024년 01월 01일</p>
+            <p>최종 수정일: 2025년 04월 01일</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

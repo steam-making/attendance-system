@@ -53,6 +53,10 @@ class Command(BaseCommand):
                 self.stdout.write(f"[{now:%H:%M}] skip: {school.name} not class day")
                 continue
 
+            if not school.user.can_use_automation:
+                self.stdout.write(f"[{now:%H:%M}] skip: {school.name} (User tier: {school.user.membership_tier}) - Pro required for automation")
+                continue
+
             settings, _ = Setting.objects.get_or_create(user=school.user)
             department_times = school.get_today_department_times(today)
             processed_any = False

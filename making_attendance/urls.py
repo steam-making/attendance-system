@@ -17,8 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.views.generic import TemplateView
 
 urlpatterns = [
+    # ✅ SEO 전용 파일 연결 (루트 경로에서 작동)
+    path("robots.txt", TemplateView.as_view(template_name="seo/robots.txt", content_type="text/plain")),
+    path("sitemap.xml", TemplateView.as_view(template_name="seo/sitemap.xml", content_type="application/xml")),
+
     path('', lambda request: redirect('login', permanent=False)),  # 👉 기본 접속은 로그인으로
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),  # accounts 앱 URL 포함

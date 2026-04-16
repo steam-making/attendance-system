@@ -38,6 +38,10 @@ def check_username(request):
 
 @login_required
 def profile(request):
+    from .models import PaymentLog
+    from django.utils import timezone
+    from datetime import timedelta
+    
     if request.method == "POST":
         form = UserUpdateForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -47,7 +51,20 @@ def profile(request):
     else:
         form = UserUpdateForm(instance=request.user)
 
-    return render(request, 'accounts/profile.html', {'form': form})
+    # 최근 결제 내역 5개 가져오기
+    payment_logs = PaymentLog.objects.filter(user=request.user).order_by('-created_at')[:5]
+    
+    # 🔹 각 결제 건별로 7일 이내 환불 가능 여부 계산
+    limit_date = timezone.now() - timedelta(days=7)
+    for log in payment_logs:
+        log.is_refundable = log.created_at >= limit_date
+
+    context = {
+        'form': form,
+        'payment_logs': payment_logs,
+    }
+
+    return render(request, 'accounts/profile.html', context)
 
 def signup(request):
     if request.method == "POST":

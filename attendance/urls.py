@@ -25,6 +25,10 @@ urlpatterns = [
     # =========================
     path('', views.select_school, name='select_school'),              # 기본 진입
     path('list/', views.attendance_list, name='attendance_list'),
+    path('pricing/', views.pricing_page, name='pricing'),
+    path('terms/', views.terms_page, name='terms'),
+    path('privacy/', views.privacy_page, name='privacy'),
+    path('refund/', views.refund_page, name='refund'),
 
     # =========================
     # ✅ AJAX (웹에서 출석/취소/종료)
@@ -36,11 +40,6 @@ urlpatterns = [
     path('ajax/class/stop/', views.stop_class_session, name='stop_class_session'),
     path('ajax/attendance/auto/', views.auto_process_attendance, name='auto_process_attendance'),
     path('ajax/settings/update/', views.ajax_update_setting, name='ajax_update_setting'),
-
-    # =========================
-    # ✅ 학생
-    # =========================
-    path('student/create/', views.student_create, name='student_create'),
 
     # =========================
     # ✅ 학생

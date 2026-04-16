@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}멤버십 요금제 - 출첵마스터{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="text-center mb-16">
+        <h2 class="text-base font-bold text-indigo-600 tracking-wide uppercase">PRICING</h2>
+        <p class="mt-2 text-4xl font-extrabold text-slate-900 sm:text-5xl">
+            합리적인 가격으로 <span class="text-indigo-600">Pro</span> 의 혜택을 누리세요
+        </p>
+        <p class="mt-4 text-xl text-slate-500">원하시는 기간을 선택하고 더 많은 보너스 혜택을 받아보세요.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto items-center">
+        <!-- Free Plan -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col h-full opacity-80 hover:opacity-100 transition-opacity">
+            <div class="mb-8">
+                <h3 class="text-xl font-bold text-slate-900">Free</h3>
+                <p class="mt-4 text-slate-500 text-sm">기본적인 출결 관리를 위한 무료 요금제</p>
+                <div class="mt-6 flex items-baseline">
+                    <span class="text-4xl font-extrabold tracking-tight text-slate-900">₩0</span>
+                    <span class="ml-1 text-xl font-semibold text-slate-500">/영구</span>
+                </div>
+            </div>
+
+            <ul class="space-y-4 mb-10 flex-grow">
+                <li class="flex items-start">
+                    <i class="ph-bold ph-check text-slate-400 mt-1 mr-3"></i>
+                    <span class="text-slate-600">학교 등록 <strong class="text-slate-900">최대 1개</strong></span>
+                </li>
+                <li class="flex items-start">
+                    <i class="ph-bold ph-check text-slate-400 mt-1 mr-3"></i>
+                    <span class="text-slate-600">학교당 학생 <strong class="text-slate-900">최대 80명</strong></span>
+                </li>
+                <li class="flex items-start">
+                    <i class="ph-bold ph-warning text-amber-500 mt-1 mr-3"></i>
+                    <span class="text-slate-500">광고 노출 포함</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="ph-bold ph-x text-slate-300 mt-1 mr-3"></i>
+                    <span class="text-slate-400 line-through">자동 지각/종료 문자 비활성</span>
+                </li>
+            </ul>
+
+            <button disabled class="w-full py-4 px-6 rounded-xl font-bold text-slate-400 bg-slate-100 cursor-not-allowed">
+                기본 제공 중
+            </button>
+        </div>
+
+        <!-- Pro Plan (Enhanced) -->
+        <div class="bg-white rounded-2xl shadow-2xl border-2 border-indigo-600 p-8 flex flex-col relative scale-105 ring-4 ring-indigo-50 min-h-[650px]">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-indigo-600 text-white text-sm font-bold px-4 py-1 rounded-full shadow-lg">
+                추천 요금제
+            </div>
+            
+            {% if user.is_pro %}
+            <div class="absolute top-0 right-0 bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full border border-indigo-200 transform -translate-y-3 -translate-x-8">
+                현재 이용 중
+            </div>
+            {% endif %}
+
+            <div class="mb-6 text-center sm:text-left">
+                <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    Pro
+                    <i class="ph-fill ph-crown text-amber-400"></i>
+                </h3>
+                <p class="mt-2 text-slate-500 text-sm">일손을 덜어주는 자동화 요금제</p>
+                
+                <!-- 기간 선택 탭 -->
+                <div class="mt-8 p-1 bg-slate-100 rounded-xl flex flex-wrap items-center justify-between mb-6 gap-1">
+                    <button onclick="selectPlan('1m_auto')" id="btn-1m_auto" class="flex-1 min-w-[80px] py-2 text-[10px] font-bold rounded-lg transition-all plan-btn active bg-white text-indigo-600 shadow-sm">매월 자동</button>
+                    <button onclick="selectPlan('1m')" id="btn-1m" class="flex-1 min-w-[80px] py-2 text-[10px] font-bold rounded-lg transition-all plan-btn text-slate-500">1개월 단건</button>
+                    <button onclick="selectPlan('6m')" id="btn-6m" class="flex-1 min-w-[80px] py-2 text-[10px] font-bold rounded-lg transition-all plan-btn text-slate-500">6개월 (5+1)</button>
+                    <button onclick="selectPlan('12m')" id="btn-12m" class="flex-1 min-w-[80px] py-2 text-[10px] font-bold rounded-lg transition-all plan-btn text-slate-500">1년 (10+2)</button>
+                </div>
+
+                <div class="flex items-baseline justify-center sm:justify-start">
+                    <span id="display-price" class="text-5xl font-extrabold tracking-tight text-indigo-600">₩4,000</span>
+                    <span id="display-period" class="ml-1 text-xl font-semibold text-slate-500">/월</span>
+                </div>
+                <!-- 할인 강조 배지 -->
+                <div id="bonus-badge" class="mt-3 transition-all">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-600/20">
+                        <i class="ph-fill ph-gift mr-1"></i> <span id="bonus-text">정기구독 900원 특별 할인!</span>
+                    </span>
+                </div>
+            </div>
+
+            <ul class="space-y-3 mb-8 flex-grow">
+                <li class="flex items-start text-sm">
+                    <i class="ph-bold ph-check text-indigo-600 mt-1 mr-3"></i>
+                    <span class="text-slate-600">학교 등록 <strong class="text-slate-900 border-b-2 border-indigo-100">최대 5개</strong></span>
+                </li>
+                <li class="flex items-start text-sm">
+                    <i class="ph-bold ph-check text-indigo-600 mt-1 mr-3"></i>
+                    <span class="text-slate-600">학교당 학생 <strong class="text-slate-900 border-b-2 border-indigo-100">최대 80명</strong></span>
+                </li>
+                <li class="flex items-start text-sm">
+                    <i class="ph-bold ph-crown text-amber-500 mt-1 mr-3"></i>
+                    <span class="text-indigo-700 font-bold italic">모든 광고 제거 (AD FREE)</span>
+                </li>
+                <li class="flex items-start text-sm">
+                    <i class="ph-bold ph-magic-wand text-indigo-600 mt-1 mr-3"></i>
+                    <span class="text-slate-800 font-bold">자동 지각/종료 문자 발송 권한</span>
+                </li>
+            </ul>
+
+            <button id="pay-button" onclick="requestPaymentBySelection()" class="w-full py-4 px-6 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg transition-all transform hover:-translate-y-1 active:scale-95 shadow-indigo-200">
+                Pro 로 시작하기
+            </button>
+            <p id="sub-info" class="mt-4 text-[10px] text-center text-slate-400">
+                매월 자동 결제되며, 언제든지 마이페이지에서 해지할 수 있습니다.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+
+<script>
+    let currentPlan = '1m_auto';
+    const plans = {
+        '1m_auto': { price: 4000, days: 30, text: '매월 자동', bonus: '정기구독 900원 특별 할인!', info: '매월 자동 결제되며, 언제든지 마이페이지에서 해지할 수 있습니다.' },
+        '1m': { price: 4900, days: 30, text: '일시불', bonus: '', info: '일회성 결제 상품으로 자동 연장되지 않습니다.' },
+        '6m': { price: 24500, days: 180, text: '일시불', bonus: '5개월 요금으로 6개월 이용!', info: '일회성 결제 상품으로 자동 연장되지 않습니다.' },
+        '12m': { price: 49000, days: 365, text: '일시불', bonus: '10개월 요금으로 12개월 이용!', info: '일회성 결제 상품으로 자동 연장되지 않습니다.' }
+    };
+
+    function selectPlan(planId) {
+        currentPlan = planId;
+        const plan = plans[planId];
+        
+        // UI 업데이트
+        document.getElementById('display-price').innerText = '₩' + plan.price.toLocaleString();
+        document.getElementById('display-period').innerText = planId === '1m_auto' ? '/월' : '';
+        document.getElementById('sub-info').innerText = plan.info;
+        
+        const badge = document.getElementById('bonus-badge');
+        if(plan.bonus) {
+            document.getElementById('bonus-text').innerText = plan.bonus;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        // 버튼 스타일
+        document.querySelectorAll('.plan-btn').forEach(btn => {
+            btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+            btn.classList.add('text-slate-500');
+        });
+        const activeBtn = document.getElementById('btn-' + planId);
+        activeBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+        activeBtn.classList.remove('text-slate-500');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const IMP = window.IMP;
+        const shopId = "{{ PORTONE_SHOP_ID|default:'imp10391932' }}";
+        IMP.init(shopId); 
+    });
+
+    function requestPaymentBySelection() {
+        const plan = plans[currentPlan];
+        const merchant_uid = "ORD-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000);
+        
+        const payData = {
+            pg: "kakaopay.TC0ONETIME",
+            pay_method: "card",
+            merchant_uid: merchant_uid,
+            name: "출첵마스터 Pro " + plan.text + (currentPlan.includes('1m') ? '' : ' ' + currentPlan.replace('m', '개월')),
+            amount: plan.price,
+            buyer_email: "{{ user.email }}",
+            buyer_name: "{{ user.username }}",
+        };
+
+        // 🔹 정기결제일 경우 빌링키 요청(customer_uid) 추가
+        if (currentPlan === '1m_auto') {
+            payData.customer_uid = "USER-" + "{{ user.id }}" + "-" + new Date().getTime();
+        }
+
+        window.IMP.request_pay(payData, function (rsp) {
+            if (rsp.success) {
+                verifyPayment(rsp.imp_uid, merchant_uid, plan.price, plan.days, payData.customer_uid);
+            } else {
+                alert("결제에 실패하였습니다. 사유: " + rsp.error_msg);
+            }
+        });
+    }
+
+    function verifyPayment(imp_uid, merchant_uid, amount, days, customer_uid) {
+        fetch("{% url 'payment_verify' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                imp_uid: imp_uid,
+                merchant_uid: merchant_uid,
+                amount: amount,
+                days: days,
+                customer_uid: customer_uid
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                window.location.href = "{% url 'profile' %}";
+            } else {
+                alert("결제 검증 실패: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("서버 통신 중 오류가 발생했습니다.");
+        });
+    }
+</script>
+{% endblock %}

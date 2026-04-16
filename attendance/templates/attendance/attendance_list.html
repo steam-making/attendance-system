@@ -309,13 +309,6 @@
                                                 <i class="ph-bold ph-x"></i>
                                                 <span class="btn-text ml-1 text-xs">결석</span>
                                             </button>
-
-                                            <button onclick="cancelAttendance({{ student.id }}, 'attendance-cell-{{ student.id }}')"
-                                                    class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors"
-                                                    title="취소">
-                                                <i class="ph-bold ph-x"></i>
-                                                <span class="btn-text ml-1 text-xs">취소</span>
-                                            </button>
                                         {% elif attendance and not attendance.status|startswith:'대기' and not attendance.status|startswith:'취소' %}
                                             <div class="flex justify-center items-center gap-2">
                                                 {% if attendance.status|startswith:'결석' %}
@@ -1159,7 +1152,10 @@
             if (data.status === 'success') {
                 window.location.reload();
             } else if (data.status === 'error') {
-                if (data.errors) {
+                if (data.is_limit_error) {
+                    // ✅ 인원 제한 에러 시 구독 안내 모달 띄우기
+                    togglePricingModal(true, data.message);
+                } else if (data.errors) {
                     let errorMessages = [];
                     for (const [field, message] of Object.entries(data.errors)) {
                         errorMessages.push(`${field}: ${message}`);
