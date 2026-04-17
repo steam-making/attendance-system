@@ -36,3 +36,9 @@ env/
 .idea/
 .vscode/
 .DS_Store
+nul
+
+# =========================
+# Scratch / Temp
+# =========================
+scratch/

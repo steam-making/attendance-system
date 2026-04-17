@@ -9,18 +9,18 @@
     <meta name="google-site-verification" content="mjFxqulPbWqeFajG6ts_gO8T-esWp0tKhmYgM3U_T9I" />
     <meta name="naver-site-verification" content="c53d943e6fac4b1683b1ecf530fb59379d6a94a7" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Outfit', 'Noto Sans KR', 'sans-serif'],
                     },
                     colors: {
                         primary: {
-                            50: '#eff6ff',
+                            50: '#f0f4ff',
                             100: '#dbeafe',
                             500: '#3b82f6',
                             600: '#2563eb',
@@ -31,224 +31,329 @@
             }
         }
     </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .input-focus:focus {
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-900" style="padding-top: calc(2rem + env(safe-area-inset-top));">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="flex justify-center">
-            <i class="ph-fill ph-calendar-check text-primary-600 text-5xl"></i>
+<body class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-900 bg-gradient-to-br from-indigo-50 via-white to-sky-50">
+    
+    <div class="w-full max-w-lg space-y-8">
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white shadow-xl shadow-indigo-100/50 mb-6">
+                <i class="ph-fill ph-calendar-check text-primary-600 text-5xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold tracking-tight text-slate-900">출첵마스터 시작하기</h1>
+            <p class="mt-3 text-slate-500 font-medium tracking-tight">관리의 스마트한 변화, 1인 1계정 보안 정책이 적용됩니다.</p>
         </div>
-        <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900">회원가입</h2>
-        <p class="mt-2 text-center text-sm text-slate-600">
-            이미 계정이 있으신가요?
-            <a href="{% url 'login' %}" class="font-medium text-primary-600 hover:text-primary-500 transition-colors">로그인</a>
-        </p>
-    </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-100">
-            <form method="post" action="{% url 'signup' %}" class="space-y-6">
+        <div class="glass-card p-8 sm:p-10 shadow-2xl shadow-indigo-200/50 rounded-3xl border border-white">
+            <form method="post" action="{% url 'signup' %}" class="space-y-6" id="signupForm">
                 {% csrf_token %}
-                {% if form.errors %}
-                <div class="bg-red-50 p-4 rounded-md border border-red-200">
-                    <h3 class="text-sm font-medium text-red-800">입력하신 정보에 오류가 있습니다:</h3>
-                    <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
+                
+                {% if messages %}
+                <div class="space-y-3">
+                {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-50 border-red-100 text-red-700{% else %}bg-green-50 border-green-100 text-green-700{% endif %} p-4 rounded-2xl border flex items-start gap-3">
+                    <i class="ph-bold {% if message.tags == 'error' %}ph-warning-circle text-red-500{% else %}ph-check-circle text-green-500{% endif %} text-xl mt-0.5"></i>
+                    <div class="text-sm">
+                        <p class="font-bold">{{ message }}</p>
+                    </div>
+                </div>
+                {% endfor %}
                 </div>
                 {% endif %}
-                
-                <!-- 아이디 -->
-                <div>
-                    <label for="id_username" class="block text-sm font-medium leading-6 text-slate-900">아이디</label>
-                    <div class="mt-2 flex rounded-md shadow-sm">
-                        {{ form.username|add_class:"block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" }}
-                        <button type="button" class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50" onclick="checkUsername()">
+
+                {% if form.errors and not messages %}
+                <div class="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-start gap-3">
+                    <i class="ph-bold ph-warning-circle text-red-500 text-xl mt-0.5"></i>
+                    <div class="text-sm text-red-700">
+                        <p class="font-bold mb-1">입력 정보를 확인해 주세요</p>
+                        <ul class="list-disc list-inside space-y-0.5 opacity-80">
+                            {% for field in form %}
+                                {% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 아이디 섹션 -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center ml-1">
+                        <label for="id_username" class="text-sm font-bold text-slate-700">아이디</label>
+                        <span class="text-[10px] text-slate-400">영문/숫자 조합</span>
+                    </div>
+                    <div class="flex gap-2">
+                        {{ form.username|add_class:"block w-full rounded-2xl border-slate-200 bg-white/50 py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus" }}
+                        <button type="button" onclick="checkUsername()" class="whitespace-nowrap rounded-2xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 transition-all">
                             중복 확인
                         </button>
                     </div>
-                    <div id="username-check-result" class="mt-2 text-sm text-slate-500"></div>
+                    <p id="username-check-result" class="text-xs ml-1"></p>
                 </div>
 
-                <!-- 이름 -->
-                <div>
-                    <label for="id_first_name" class="block text-sm font-medium leading-6 text-slate-900">이름</label>
-                    <div class="mt-2">
-                        {{ form.first_name|add_class:"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" }}
+                <!-- 이름 및 전화번호 섹션 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="id_first_name" class="text-sm font-bold text-slate-700 ml-1">이름 (실명)</label>
+                        {{ form.first_name|add_class:"block w-full rounded-2xl border-slate-200 bg-white/50 py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus" }}
                     </div>
-                </div>
-
-                <!-- 비밀번호 -->
-                <div>
-                    <label for="id_password1" class="block text-sm font-medium leading-6 text-slate-900">비밀번호</label>
-                    <div class="mt-2">
-                        {{ form.password1|add_class:"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" }}
-                    </div>
-                    <div id="password-check-result" class="mt-2 text-sm text-slate-500">
-                        ※ 8자 이상, 숫자/문자 조합 권장
+                    <div class="space-y-2">
+                        <label for="id_phone" class="text-sm font-bold text-slate-700 ml-1">전화번호</label>
+                        {{ form.phone|add_class:"block w-full rounded-2xl border-slate-200 bg-white/50 py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus" }}
                     </div>
                 </div>
 
-                <!-- 비밀번호 확인 -->
-                <div>
-                    <label for="id_password2" class="block text-sm font-medium leading-6 text-slate-900">비밀번호 확인</label>
-                    <div class="mt-2">
-                        {{ form.password2|add_class:"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" }}
+                <!-- 이메일 인증 섹션 (고도화됨) -->
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-700 ml-1">이메일 인증 (실소유 확인)</label>
+                    <div class="flex items-center gap-2 mb-2">
+                        {{ form.email_id|add_class:"block w-full rounded-2xl border-slate-200 bg-white/50 py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus" }}
+                        <span class="text-slate-400 font-bold">@</span>
+                        <div class="w-full relative">
+                            <select id="email-domain-select" name="email_domain" class="block w-full rounded-2xl border-slate-200 bg-white py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus appearance-none">
+                                <option value="naver.com">naver.com</option>
+                                <option value="gmail.com">gmail.com</option>
+                                <option value="daum.net">daum.net</option>
+                                <option value="직접입력">직접입력</option>
+                            </select>
+                            <input type="text" id="email-domain-custom" name="email_custom" class="hidden absolute inset-0 w-full rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary-500 focus:ring-primary-500 transition-all input-focus" placeholder="도메인 입력">
+                        </div>
                     </div>
-                    <div id="password-match-result" class="mt-2 text-sm text-slate-500">
-                        ※ 비밀번호가 일치해야 합니다.
-                    </div>
-                </div>
-
-                <!-- 이메일 -->
-                <div>
-                    <label class="block text-sm font-medium leading-6 text-slate-900">이메일</label>
-                    <div class="mt-2 flex rounded-md shadow-sm">
-                        {{ form.email_id|add_class:"block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" }}
-                        <span class="inline-flex items-center border border-l-0 border-slate-300 px-3 text-slate-500 bg-slate-50">@</span>
-                        <select id="email-domain-select" name="email_domain" class="block w-full rounded-none rounded-r-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3">
-                            <option value="naver.com">naver.com</option>
-                            <option value="gmail.com">gmail.com</option>
-                            <option value="daum.net">daum.net</option>
-                            <option value="직접입력">직접입력</option>
-                        </select>
-                        <!-- 직접입력 필드 (초기 비활성화) -->
-                        <input type="text" id="email-domain-custom" name="email_custom"
-                            class="hidden block w-full rounded-none rounded-r-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" placeholder="도메인 입력">
-                    </div>
-                </div>
-
-                <!-- 전화번호 -->
-                <div>
-                    <label for="id_phone" class="block text-sm font-medium leading-6 text-slate-900">전화번호</label>
-                    <div class="mt-2">
-                        {{ form.phone|add_class:"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 px-3" }}
-                    </div>
-                </div>
-
-                <div>
-                    <button type="submit" class="flex w-full justify-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors">
-                        가입하기
+                    <button type="button" id="btnSendCode" onclick="sendEmailCode()" class="w-full rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 shadow-sm hover:bg-indigo-100 transition-all border border-indigo-100 flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-paper-plane-tilt"></i>
+                        인증 메일 발송
                     </button>
+                    
+                    <div id="verifySection" class="hidden mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <input type="text" id="verifyCode" placeholder="인증번호 6자리" maxlength="6" class="block w-full rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary-500 focus:ring-primary-500 transition-all input-focus">
+                        <button type="button" onclick="confirmCode()" class="whitespace-nowrap rounded-2xl bg-slate-800 px-6 py-3 text-sm font-bold text-white hover:bg-slate-900 transition-all">
+                            확인
+                        </button>
+                    </div>
+                    <p id="email-check-result" class="text-xs ml-1"></p>
+                </div>
+
+                <!-- 비밀번호 섹션 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="id_password1" class="text-sm font-bold text-slate-700 ml-1">비밀번호</label>
+                        {{ form.password1|add_class:"block w-full rounded-2xl border-slate-200 bg-white/50 py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus" }}
+                        <p id="password-check-msg" class="text-[10px] ml-1 text-slate-400"></p>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="id_password2" class="text-sm font-bold text-slate-700 ml-1">확인</label>
+                        {{ form.password2|add_class:"block w-full rounded-2xl border-slate-200 bg-white/50 py-3 px-4 text-slate-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-all input-focus" }}
+                        <p id="password-match-msg" class="text-[10px] ml-1 text-slate-400"></p>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" id="btnSubmit" disabled class="group relative flex w-full justify-center rounded-2xl bg-indigo-600 px-4 py-4 text-lg font-bold text-white shadow-xl shadow-indigo-200 hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed">
+                        가입 완료하기
+                    </button>
+                    <p class="mt-4 text-center text-sm text-slate-500 font-medium">
+                        이미 회원이신가요?
+                        <a href="{% url 'login' %}" class="font-bold text-indigo-600 hover:text-indigo-500 transition-colors underline decoration-2 underline-offset-4">로그인하기</a>
+                    </p>
                 </div>
             </form>
-
-            <div class="mt-6">
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div class="w-full border-t border-slate-200"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm font-medium leading-6">
-                        <span class="bg-white px-4 text-slate-500">또는 소셜 계정으로 가입</span>
-                    </div>
-                </div>
-
-                <div class="mt-6 grid grid-cols-2 gap-4">
-                    {% load socialaccount %}
-                    
-                    {# 구글 가입 버튼 #}
-                    <a href="{% provider_login_url 'google' %}" class="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-all">
-                        <i class="ph-fill ph-google-logo text-xl text-[#EA4335]"></i>
-                        <span class="text-sm">Google</span>
-                    </a>
-
-                    {# 카카오 가입 버튼 #}
-                    <a href="{% provider_login_url 'kakao' %}" class="flex w-full items-center justify-center gap-3 rounded-md bg-[#FEE500] px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-[#FADA0A] transition-all">
-                        <i class="ph-fill ph-chat-circle text-xl"></i>
-                        <span class="text-sm">Kakao</span>
-                    </a>
-                </div>
-            </div>
         </div>
+        
+        <p class="text-center text-xs text-slate-400 font-medium">
+            &copy; 2025 Medutech. All rights reserved.
+        </p>
     </div>
 
 <script>
+let isUsernameValid = false;
+let isEmailVerified = false;
+
+function validateForm() {
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = !(isUsernameValid && isEmailVerified);
+}
+
+// 아이디 중복 체크
+async function checkUsername() {
+    const username = document.getElementById('id_username').value;
+    const resultEl = document.getElementById('username-check-result');
+    
+    if (!username) {
+        resultEl.innerText = "아이디를 입력해 주세요.";
+        resultEl.className = "text-xs ml-1 text-red-500 font-medium";
+        return;
+    }
+
+    try {
+        const response = await fetch(`/accounts/check-username/?username=${encodeURIComponent(username)}`);
+        const data = await response.json();
+        
+        if (data.exists) {
+            resultEl.innerText = "이미 사용 중인 아이디입니다.";
+            resultEl.className = "text-xs ml-1 text-red-500 font-medium";
+            isUsernameValid = false;
+        } else {
+            resultEl.innerText = "멋진 아이디네요! 사용 가능합니다.";
+            resultEl.className = "text-xs ml-1 text-green-600 font-medium";
+            isUsernameValid = true;
+        }
+        validateForm();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// 이메일 인증번호 발송
+async function sendEmailCode() {
+    const emailId = document.getElementById('id_email_id').value;
+    const emailDomainSelect = document.getElementById('email-domain-select');
+    const emailDomainCustom = document.getElementById('email-domain-custom');
+    
+    let domain = emailDomainSelect.value;
+    if (domain === '직접입력') {
+        domain = emailDomainCustom.value;
+    }
+
+    const email = `${emailId}@${domain}`;
+    const resultEl = document.getElementById('email-check-result');
+    const btnSend = document.getElementById('btnSendCode');
+
+    if (!emailId || !domain || domain.indexOf('.') === -1) {
+        alert("올바른 이메일 주소를 입력해 주세요.");
+        return;
+    }
+
+    btnSend.disabled = true;
+    btnSend.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> 발송 중...`;
+
+    try {
+        const response = await fetch('/accounts/api/email-verify/send/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'email': email })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('verifySection').classList.remove('hidden');
+            resultEl.innerText = "인증 메일이 발송되었습니다. 메일함을 확인해 주세요.";
+            resultEl.className = "text-xs ml-1 text-primary-600 font-medium";
+            btnSend.innerText = "재발송 하기";
+        } else {
+            alert(data.message);
+            resultEl.innerText = data.message;
+            resultEl.className = "text-xs ml-1 text-red-500 font-medium";
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        btnSend.disabled = false;
+        if (!isEmailVerified) {
+            btnSend.innerHTML = `<i class="ph-bold ph-paper-plane-tilt"></i> 재발송 하기`;
+        }
+    }
+}
+
+// 인증번호 확인
+async function confirmCode() {
+    const emailId = document.getElementById('id_email_id').value;
+    const emailDomainSelect = document.getElementById('email-domain-select');
+    const emailDomainCustom = document.getElementById('email-domain-custom');
+    
+    let domain = emailDomainSelect.value;
+    if (domain === '직접입력') {
+        domain = emailDomainCustom.value;
+    }
+    const email = `${emailId}@${domain}`;
+    const code = document.getElementById('verifyCode').value;
+    const resultEl = document.getElementById('email-check-result');
+
+    try {
+        const response = await fetch('/accounts/api/phone-verify/confirm/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'email': email, 'code': code })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            resultEl.innerText = "이메일 인증이 완료되었습니다. ✅";
+            resultEl.className = "text-xs ml-1 text-green-600 font-bold";
+            isEmailVerified = true;
+            document.getElementById('verifySection').classList.add('hidden');
+            document.getElementById('id_email_id').readOnly = true;
+            const domainSelect = document.getElementById('email-domain-select');
+            const domainCustom = document.getElementById('email-domain-custom');
+            
+            domainSelect.style.pointerEvents = 'none';
+            domainSelect.classList.add('bg-slate-100', 'cursor-not-allowed');
+            
+            domainCustom.readOnly = true;
+            domainCustom.classList.add('bg-slate-100', 'cursor-not-allowed');
+            
+            document.getElementById('btnSendCode').classList.add('hidden');
+            validateForm();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// 실시간 비밀번호 체크
 document.addEventListener("DOMContentLoaded", function () {
     const pw1 = document.getElementById("id_password1");
     const pw2 = document.getElementById("id_password2");
-    const matchResult = document.getElementById("password-match-result");
+    const msg1 = document.getElementById("password-check-msg");
+    const msg2 = document.getElementById("password-match-msg");
+
+    pw1.addEventListener("input", function() {
+        if (pw1.value.length < 8) {
+            msg1.innerText = "8자 이상의 조합으로 작성해 주세요.";
+            msg1.className = "text-[10px] ml-1 text-slate-400";
+        } else {
+            msg1.innerText = "안전한 비밀번호입니다.";
+            msg1.className = "text-[10px] ml-1 text-green-600 font-medium";
+        }
+    });
 
     function checkMatch() {
-        if (pw2.value === "") {
-            matchResult.innerText = "※ 비밀번호가 일치해야 합니다.";
-            matchResult.className = "mt-2 text-sm text-slate-500";
+        if (!pw2.value) {
+            msg2.innerText = "";
         } else if (pw1.value === pw2.value) {
-            matchResult.innerText = "✅ 비밀번호가 일치합니다.";
-            matchResult.className = "mt-2 text-sm text-green-600 font-medium";
+            msg2.innerText = "비밀번호가 일치합니다.";
+            msg2.className = "text-[10px] ml-1 text-green-600 font-medium";
         } else {
-            matchResult.innerText = "❌ 비밀번호가 일치하지 않습니다.";
-            matchResult.className = "mt-2 text-sm text-red-600 font-medium";
+            msg2.innerText = "비밀번호가 일치하지 않습니다.";
+            msg2.className = "text-[10px] ml-1 text-red-500 font-medium";
         }
     }
 
     pw1.addEventListener("input", checkMatch);
     pw2.addEventListener("input", checkMatch);
-});
 
-document.addEventListener("DOMContentLoaded", function () {
-    const passwordInput = document.getElementById("id_password1");
-    const resultDiv = document.getElementById("password-check-result");
+    // 이메일 도메인 선택 처리
+    const emailSelect = document.getElementById('email-domain-select');
+    const emailCustom = document.getElementById('email-domain-custom');
 
-    passwordInput.addEventListener("input", function () {
-        const value = passwordInput.value;
-        let message = "";
-        let isValid = true;
-
-        if (value.length < 8) {
-            message = "❌ 비밀번호는 최소 8자 이상이어야 합니다.";
-            isValid = false;
-        } else if (!/[a-zA-Z]/.test(value) || !/[0-9]/.test(value)) {
-            message = "❌ 영문자와 숫자를 모두 포함해야 합니다.";
-            isValid = false;
+    emailSelect.addEventListener('change', function () {
+        if (emailSelect.value === '직접입력') {
+            emailSelect.classList.add('hidden');
+            emailCustom.classList.remove('hidden');
+            emailCustom.focus();
         } else {
-            message = "✅ 사용 가능한 비밀번호입니다.";
-            isValid = true;
-        }
-
-        resultDiv.innerText = message;
-        resultDiv.className = isValid ? "mt-2 text-sm text-green-600 font-medium" : "mt-2 text-sm text-red-600 font-medium";
-    });
-});
-
-function checkUsername() {
-    const username = document.getElementById("id_username").value;
-    if (!username) {
-        document.getElementById("username-check-result").innerText = "아이디를 입력하세요.";
-        return;
-    }
-
-    fetch(`/accounts/check-username/?username=${encodeURIComponent(username)}`)
-        .then(response => response.json())
-        .then(data => {
-            const resultEl = document.getElementById("username-check-result");
-            if (data.exists) {
-                resultEl.innerText = "이미 사용 중인 아이디입니다.";
-                resultEl.className = "mt-2 text-sm text-red-600 font-medium";
-            } else {
-                resultEl.innerText = "사용 가능한 아이디입니다.";
-                resultEl.className = "mt-2 text-sm text-green-600 font-medium";
-            }
-        });
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    const select = document.getElementById('email-domain-select');
-    const custom = document.getElementById('email-domain-custom');
-
-    select.addEventListener('change', function () {
-        if (select.value === '직접입력') {
-            select.classList.add('hidden');
-            custom.classList.remove('hidden');
-            custom.focus();
-        } else {
-            custom.classList.add('hidden');
-            select.classList.remove('hidden');
+            emailCustom.classList.add('hidden');
+            emailSelect.classList.remove('hidden');
         }
     });
 });

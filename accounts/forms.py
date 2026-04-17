@@ -20,7 +20,7 @@ class SignUpForm(UserCreationForm):
 
     class Meta:
         model = get_user_model()  # CustomUser 모델 사용 시
-        fields = ['username', 'first_name', 'password1', 'password2','email_id', 'email_domain', 'email_custom', 'phone',]
+        fields = ['username', 'first_name', 'phone']
         labels = {
             'username': '아이디',
             'first_name': '이름',
@@ -44,6 +44,12 @@ class SignUpForm(UserCreationForm):
         cleaned_data['email'] = full_email  # User 모델의 email 필드에 연결
 
         return cleaned_data
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if get_user_model().objects.filter(phone=phone).exists():
+            raise forms.ValidationError("이 전화번호로 이미 가입된 계정이 있습니다. 1인 1계정만 허용됩니다.")
+        return phone
 
     def save(self, commit=True):
         user = super().save(commit=False)

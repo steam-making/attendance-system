@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import signup, profile, change_password, check_username, settings_view
 from .views import CustomLoginView
-from . import views, views_payment
+from . import views, views_payment, views_api
 
 urlpatterns = [
     path('signup/', signup, name='signup'),
@@ -17,4 +17,8 @@ urlpatterns = [
     path('ajax/payment/verify/', views_payment.payment_verify_api, name='payment_verify'),
     path('ajax/payment/unsubscribe/', views_payment.payment_unsubscribe_api, name='payment_unsubscribe'),
     path('ajax/payment/cancel/', views_payment.payment_cancel_api, name='payment_cancel'),
+    
+    # ✅ 이메일 인증 API
+    path('api/email-verify/send/', views_api.send_email_verification, name='email_verify_send'),
+    path('api/phone-verify/confirm/', views_api.confirm_verification_code, name='phone_verify_confirm'),
 ]

@@ -369,7 +369,9 @@ def select_school(request):
 
     if request.method == 'POST':
         selected_id = request.POST.get('school')
-        return redirect(f"/attendance/?school={selected_id}")
+        if selected_id:
+            return redirect(f"/attendance/?school={selected_id}")
+        return redirect('select_school')
 
     return render(request, 'attendance/select_school.html', {
         'schools': schools,

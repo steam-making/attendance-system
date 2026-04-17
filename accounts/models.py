@@ -57,3 +57,21 @@ class PaymentLog(models.Model):  # ✅ 결제 이력 모델 추가
 
     def __str__(self):
         return f"{self.user.username} - {self.merchant_uid} ({self.amount}원)"
+
+class PhoneVerification(models.Model):  # ✅ 범용 인증용 모델로 사용
+    phone = models.CharField(max_length=20, verbose_name="휴대폰 번호", null=True, blank=True)
+    email = models.EmailField(verbose_name="이메일", null=True, blank=True)  # ✅ 이메일 추가
+    code = models.CharField(max_length=6, verbose_name="인증 코드")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
+    is_verified = models.BooleanField(default=False, verbose_name="인증 여부")
+
+    class Meta:
+        verbose_name = "인증 코드"
+        verbose_name_plural = "인증 코드 목록"
+
+    def is_expired(self):
+        # 5분 유효
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=5)
+
+    def __str__(self):
+        return f"{self.phone} - {self.code} ({'인증됨' if self.is_verified else '미인증'})"

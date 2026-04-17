@@ -69,11 +69,33 @@ def profile(request):
 def signup(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
+        
+        # ✅ 이메일 인증 여부 최종 확인
+        email_id = request.POST.get('email_id')
+        domain = request.POST.get('email_domain')
+        email_custom = request.POST.get('email_custom')
+        
+        if domain == '직접입력':
+            current_email = f"{email_id}@{email_custom}".strip().lower()
+        else:
+            current_email = f"{email_id}@{domain}".strip().lower()
+            
+        verified_email = request.session.get('verified_email')
+        
+        if current_email != verified_email:
+            messages.error(request, "이메일 인증이 필요하거나 이메일 주소가 변경되었습니다. 다시 인증해 주세요.")
+            return render(request, 'accounts/signup.html', {'form': form})
+
         if form.is_valid():
             user = form.save()
-            login(request, user)  # 회원가입 후 자동 로그인
-            messages.success(request, f"환영합니다, {user.username}님! 회원가입이 완료되었습니다.")  # ✅ 환영 메시지 추가
-            return redirect('select_school')  # 가입 후 홈페이지로 이동
+            
+            # 가입 완료 후 세션에서 인증 정보 삭제
+            if 'verified_email' in request.session:
+                del request.session['verified_email']
+                
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')  # 회원가입 후 자동 로그인
+            messages.success(request, f"환영합니다, {user.username}님! 회원가입이 완료되었습니다.")
+            return redirect('select_school')
     else:
         form = SignUpForm()
     
