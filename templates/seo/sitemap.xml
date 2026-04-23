@@ -1,32 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- 메인 로그인 페이지 (사실상 홈) -->
     <url>
-        <loc>https://api.medutech.kr/</loc>
-        <lastmod>2025-04-16</lastmod>
+        <loc>https://api.medutech.kr/accounts/login/</loc>
+        <lastmod>2026-04-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
+    <!-- 요금 안내 -->
     <url>
-        <loc>https://api.medutech.kr/pricing/</loc>
-        <lastmod>2025-04-16</lastmod>
+        <loc>https://api.medutech.kr/attendance/pricing/</loc>
+        <lastmod>2026-04-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
+    <!-- 이용약관 -->
     <url>
-        <loc>https://api.medutech.kr/terms/</loc>
-        <lastmod>2025-04-16</lastmod>
+        <loc>https://api.medutech.kr/attendance/terms/</loc>
+        <lastmod>2026-04-23</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.5</priority>
     </url>
+    <!-- 개인정보처리방침 -->
     <url>
-        <loc>https://api.medutech.kr/privacy/</loc>
-        <lastmod>2025-04-16</lastmod>
+        <loc>https://api.medutech.kr/attendance/privacy/</loc>
+        <lastmod>2026-04-23</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.5</priority>
     </url>
+    <!-- 환불 정책 -->
     <url>
-        <loc>https://api.medutech.kr/refund/</loc>
-        <lastmod>2025-04-16</lastmod>
+        <loc>https://api.medutech.kr/attendance/refund/</loc>
+        <lastmod>2026-04-23</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.5</priority>
     </url>

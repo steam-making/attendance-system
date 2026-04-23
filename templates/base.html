@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -159,27 +160,32 @@
             </div>
         </div>
     </nav>
-
-    <!-- ✅ Main Content -->
-    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- ✅ 광고 영역 (Free 전용) -->
-    {% if not user.is_pro %}
-    <div class="w-full bg-slate-100 border-t border-slate-200 py-8 text-center">
-        <div class="max-w-2xl mx-auto px-4">
-            <div class="bg-white border-2 border-dashed border-slate-300 rounded-xl p-6 h-40 flex flex-col items-center justify-center shadow-sm">
-                <p class="text-slate-400 text-xs mb-2 uppercase tracking-widest font-bold">Advertisement</p>
-                <i class="ph-duotone ph-megaphone text-4xl text-indigo-300 mb-3"></i>
-                <p class="text-slate-600 font-semibold">여기에 광고가 노출됩니다.</p>
-                <a href="{% url 'pricing' %}" class="mt-3 text-indigo-600 text-sm font-bold hover:underline flex items-center gap-1">
-                    Pro 로 업그레이드하고 모든 광고 제거하기 <i class="ph ph-arrow-right"></i>
+    
+    <!-- ✅ 상단 광고 영역 (Free / 익명 사용자 전용) -->
+    {% if not user.is_authenticated or not user.is_pro %}
+    <div class="w-full bg-indigo-50 border-b border-indigo-100 overflow-hidden">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 lg:px-8 py-3 gap-4">
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:block h-12 w-24 flex-shrink-0 bg-white rounded-lg overflow-hidden border border-indigo-200 shadow-sm">
+                    <img src="{% static 'images/ad_pro_upsell.png' %}" alt="Pro Ad" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <p class="text-indigo-900 font-bold text-sm tracking-tight">AD: 무제한 학교/학생 관리 및 자동화 기능</p>
+                    <p class="text-indigo-600 text-xs font-medium">지금 Pro로 업그레이드하고 모든 광고를 제거하세요.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{% url 'pricing' %}" class="whitespace-nowrap bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-md flex items-center gap-1 group">
+                    최고의 혜택 확인하기 <i class="ph ph-arrow-right group-hover:translate-x-1 transition-transform"></i>
                 </a>
             </div>
         </div>
     </div>
     {% endif %}
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
 
     <!-- ✅ Footer -->
     <footer class="bg-white border-t border-slate-200 mt-auto">

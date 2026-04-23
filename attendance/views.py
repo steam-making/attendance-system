@@ -927,6 +927,9 @@ def end_class(request):
 def ajax_update_setting(request):
     try:
         data = json.loads(request.body)
+        field = data.get('field')
+        value = data.get('value')
+
         if not field:
             return JsonResponse({'status': 'error', 'message': 'Field name is required.'}, status=400)
 
