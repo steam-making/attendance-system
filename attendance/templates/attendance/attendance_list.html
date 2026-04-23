@@ -550,43 +550,54 @@
 <div id="dailyAttendanceModal" class="relative z-50 hidden" aria-labelledby="daily-attendance-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-sm"></div>
     <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm">
+        <div class="flex min-h-full items-center justify-center p-2 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-[95%] sm:my-8 sm:w-full sm:max-w-md">
                 <form method="get" action="{% url 'attendance_list' %}">
                     <input type="hidden" name="school" value="{{ selected_school.id }}">
-                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                        <h3 class="text-base font-semibold leading-6 text-slate-900" id="daily-attendance-title">날짜별 출결 조회</h3>
+                    <div class="bg-white px-5 pb-5 pt-6 sm:p-8 sm:pb-6">
+                        <h3 class="text-lg font-bold leading-6 text-slate-900" id="daily-attendance-title">날짜별 출결 조회</h3>
                         <p class="mt-2 text-sm text-slate-500">조회할 날짜를 선택하세요.</p>
-                        <div class="mt-4">
-                            <div class="border border-slate-200 rounded-lg overflow-hidden select-none">
-                                <div class="bg-slate-50 px-3 py-2 flex justify-between items-center border-b border-slate-200">
-                                    <button type="button" id="cal-prev-btn" class="p-1 hover:bg-slate-200 rounded-md text-slate-600 transition-colors">
-                                        <i class="ph-bold ph-caret-left"></i>
-                                    </button>
-                                    <span id="cal-month-year" class="text-sm font-bold text-slate-800"></span>
-                                    <button type="button" id="cal-next-btn" class="p-1 hover:bg-slate-200 rounded-md text-slate-600 transition-colors">
-                                        <i class="ph-bold ph-caret-right"></i>
+                        <div class="mt-6">
+                            <div class="border border-slate-200 rounded-xl overflow-hidden select-none shadow-sm">
+                                <div class="bg-slate-50 px-4 py-3 flex justify-between items-center border-b border-slate-200">
+                                    <div class="flex items-center gap-1 sm:gap-2">
+                                        <button type="button" id="cal-prev-btn" class="p-1.5 hover:bg-slate-200 rounded-md text-slate-600 transition-colors">
+                                            <i class="ph-bold ph-caret-left text-lg"></i>
+                                        </button>
+                                        <span id="cal-month-year" class="text-base font-bold text-slate-800 min-w-[100px] text-center"></span>
+                                        <button type="button" id="cal-next-btn" class="p-1.5 hover:bg-slate-200 rounded-md text-slate-600 transition-colors">
+                                            <i class="ph-bold ph-caret-right text-lg"></i>
+                                        </button>
+                                    </div>
+                                    <button type="button" id="cal-today-btn" class="px-2.5 py-1.5 text-xs font-bold text-violet-600 bg-white border border-violet-200 rounded-md hover:bg-violet-50 transition-colors shadow-sm">
+                                        오늘
                                     </button>
                                 </div>
-                                <div class="p-2">
-                                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500 mb-1">
-                                        <div class="text-red-500">일</div>
+                                <div class="p-3 sm:p-4">
+                                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                                        <div class="text-rose-500">일</div>
                                         <div>월</div>
                                         <div>화</div>
                                         <div>수</div>
                                         <div>목</div>
                                         <div>금</div>
-                                        <div class="text-blue-500">토</div>
+                                        <div class="text-sky-500">토</div>
                                     </div>
-                                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center text-sm">
+                                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-sm font-medium">
                                         <!-- Javascript injects days here -->
                                     </div>
                                 </div>
                             </div>
                             <!-- 달력 아래에 안내문구 표시 -->
-                            <div class="mt-3 flex items-center justify-end text-xs text-slate-500">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
-                                <span>수업/출결기록 있음</span>
+                            <div class="mt-4 flex items-center justify-end gap-3 text-[10px] sm:text-xs">
+                                <div class="flex items-center text-slate-500">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
+                                    <span>수업/출결기록 있음</span>
+                                </div>
+                                <div class="flex items-center text-slate-500">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>
+                                    <span>환불/보강사유 있음</span>
+                                </div>
                             </div>
                             <input id="dailyDateInput" type="hidden" name="daily_date" value="{{ daily_date_iso }}">
                         </div>
@@ -621,9 +632,11 @@
                                 <div class="mt-3 flex flex-wrap gap-2 text-sm justify-center sm:justify-start">
                                     <button type="button" onclick="document.getElementById('absenceReasonInput').value='개인사정'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">개인사정</button>
                                     <button type="button" onclick="document.getElementById('absenceReasonInput').value='개인-여행'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">개인-여행</button>
-                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='개인-컨디션x'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">개인-컨디션x</button>
-                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='독감'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">독감</button>
-                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='전염병'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">전염병</button>
+                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='개인-체험'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">개인-체험</button>
+                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='개인-컨디션저조'" class="px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">개인-컨디션저조</button>
+                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='학교행사'" class="px-2.5 py-1.5 rounded-md border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors font-bold">학교행사</button>
+                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='독감'" class="px-2.5 py-1.5 rounded-md border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors font-bold">독감</button>
+                                    <button type="button" onclick="document.getElementById('absenceReasonInput').value='전염병'" class="px-2.5 py-1.5 rounded-md border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors font-bold">전염병</button>
                                 </div>
                             </div>
                         </div>
@@ -760,6 +773,24 @@
                 const message = `${name}님 오늘 ${status} 처리되었습니다.`;
                 const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
 
+                // ✅ 캘린더 실시간 업데이트 로직 개선
+                const dateKey = '{{ daily_date_iso }}';
+                if (!activeDates.includes(dateKey)) activeDates.push(dateKey);
+                
+                // 현재 화면에 환불 사유가 한 명이라도 있는지 확인
+                setTimeout(() => {
+                    const hasRefundOnPage = Array.from(document.querySelectorAll('span.text-red-600')).some(el => 
+                        ['학교행사', '독감', '전염병'].includes(el.textContent.trim())
+                    );
+                    
+                    if (hasRefundOnPage) {
+                        if (!refundDates.includes(dateKey)) refundDates.push(dateKey);
+                    } else {
+                        refundDates = refundDates.filter(d => d !== dateKey);
+                    }
+                    renderCalendar(calViewYear, calViewMonth);
+                }, 100);
+
                 // Update UI based on status
                 // Using the new Tailwind button styles
                 if (status === '지각' || (data.attendance_status && data.attendance_status.includes('(문자x)') && data.attendance_status.includes('지각'))) {
@@ -823,7 +854,7 @@
         });
     }
 
-    async function markSelectedAsPresent(departmentName) {
+    function markSelectedAsPresent(departmentName) {
         if (!classSessionActive) {
             alert('수업시작 후 선택출석이 가능합니다.');
             return;
@@ -835,37 +866,41 @@
             return;
         }
 
-        const results = await Promise.all(
-            selectedCheckboxes.map((checkbox) => {
-                const studentId = parseInt(checkbox.value, 10);
-                return checkAttendance(studentId, '출석', `attendance-cell-${studentId}`, true);
-            })
-        );
+        // ✅ 커스텀 안내창 띄우기
+        const msg = `선택한 ${selectedCheckboxes.length}명의 학생을 출석 처리하시겠습니까?\n설정에 따라 출석 문자가 발송될 수 있습니다.`;
+        openClassActionConfirm(msg, async () => {
+            const results = await Promise.all(
+                selectedCheckboxes.map((checkbox) => {
+                    const studentId = parseInt(checkbox.value, 10);
+                    return checkAttendance(studentId, '출석', `attendance-cell-${studentId}`, true);
+                })
+            );
 
-        const successCount = results.filter((result) => result && result.status === 'success').length;
-        const alreadyCheckedCount = results.filter((result) => result && result.status === 'already_checked').length;
-        const errorCount = results.filter((result) => !result || result.status === 'error').length;
+            const successCount = results.filter((result) => result && result.status === 'success').length;
+            const alreadyCheckedCount = results.filter((result) => result && result.status === 'already_checked').length;
+            const errorCount = results.filter((result) => !result || result.status === 'error').length;
 
-        selectedCheckboxes.forEach((checkbox) => {
-            checkbox.checked = false;
-            const row = checkbox.closest('tr');
-            if (row) {
-                row.classList.remove('selected-row');
+            selectedCheckboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+                const row = checkbox.closest('tr');
+                if (row) {
+                    row.classList.remove('selected-row');
+                }
+            });
+
+            const selectAllCheckbox = document.getElementById(`select-all-${departmentName}`);
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
             }
+
+            const resultMessage = [
+                `선택출석 완료: ${successCount}명`,
+                `이미 처리됨: ${alreadyCheckedCount}명`,
+                `실패: ${errorCount}명`
+            ].join('\n');
+
+            alert(resultMessage);
         });
-
-        const selectAllCheckbox = document.getElementById(`select-all-${departmentName}`);
-        if (selectAllCheckbox) {
-            selectAllCheckbox.checked = false;
-        }
-
-        const resultMessage = [
-            `선택출석 완료: ${successCount}명`,
-            `이미 처리됨: ${alreadyCheckedCount}명`,
-            `실패: ${errorCount}명`
-        ].join('\n');
-
-        alert(resultMessage);
     }
 
     function cancelAttendance(studentId, rowId) {
@@ -887,6 +922,18 @@
                     <button onclick="checkAttendance(${studentId}, '결석', '${rowId}')" class="inline-flex items-center p-1.5 border border-transparent rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors shadow-sm" title="결석"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">결석</span></button>
                   </div>
                 `;
+
+                // ✅ 취소 시 캘린더 업데이트 (환불 사유가 더 이상 없는지 체크)
+                const dateKey = '{{ daily_date_iso }}';
+                setTimeout(() => {
+                    const hasRefundOnPage = Array.from(document.querySelectorAll('span.text-red-600')).some(el => 
+                        ['학교행사', '독감', '전염병'].includes(el.textContent.trim())
+                    );
+                    if (!hasRefundOnPage) {
+                        refundDates = refundDates.filter(d => d !== dateKey);
+                    }
+                    renderCalendar(calViewYear, calViewMonth);
+                }, 100);
             }
         });
     }
@@ -1300,46 +1347,73 @@
             return;
         }
 
-        if (!confirm(`정말 ${departmentName} 수업을 종료하시겠습니까?\n설정에 따라 출석한 학생들에게 종료 문자가 발송될 수 있습니다.`)) {
-            return;
+        // ✅ 선택된 학생들만 종료 처리할지 확인
+        const selectedCheckboxes = Array.from(document.querySelectorAll(`.checkbox-${departmentName}:checked`));
+        let studentIds = null;
+        let confirmMsg = `정말 ${departmentName} 수업을 종료하시겠습니까?\n설정에 따라 출석한 학생들에게 종료 문자가 발송될 수 있습니다.`;
+
+        if (selectedCheckboxes.length > 0) {
+            studentIds = selectedCheckboxes.map(cb => cb.value);
+            confirmMsg = `선택한 ${studentIds.length}명의 학생만 수업 종료 처리하시겠습니까?\n(선택하지 않은 학생은 상태가 유지됩니다.)`;
         }
 
-        const schoolId = '{{ selected_school.id }}';
+        // ✅ 커스텀 안내창 띄우기
+        openClassActionConfirm(confirmMsg, () => {
+            const schoolId = '{{ selected_school.id }}';
 
-        fetch("{% url 'end_class' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                department_name: departmentName,
-                school_id: schoolId,
-                date: '{{ daily_date_iso }}'
+            fetch("{% url 'end_class' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    department_name: departmentName,
+                    school_id: schoolId,
+                    student_ids: studentIds, // ✅ 선택한 학생이 있으면 ID 리스트 전송
+                    date: '{{ daily_date_iso }}'
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message); 
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); 
 
-            if (data.status === 'success') {
-                if (data.sms_uri) {
+                if (data.status === 'success' || data.status === 'info') {
+                    if (data.sms_uri) {
+                        setTimeout(() => {
+                            triggerProtocol(data.sms_uri);
+                        }, 100);
+                    }
                     setTimeout(() => {
-                        triggerProtocol(data.sms_uri);
-                    }, 100);
+                        window.location.reload();
+                    }, 500);
                 }
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('수업 종료 중 오류가 발생했습니다.');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('수업 종료 중 오류가 발생했습니다.');
+            });
         });
     }
+
+    // ✅ 모바일에서 결석 사유 입력 시 키보드 가림 방지
+    document.addEventListener('DOMContentLoaded', () => {
+        const absenceInput = document.getElementById('absenceReasonInput');
+        if (absenceInput) {
+            absenceInput.addEventListener('focus', function() {
+                // 약간의 지연을 주어 모달 위치가 안정된 후 스크롤
+                setTimeout(() => {
+                    const modalContent = this.closest('.relative.transform');
+                    if (modalContent) {
+                        modalContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 300);
+            });
+        }
+    });
     // === Monthly Calendar Logic ===
-    const activeDates = {{ active_dates_json|safe|default:"[]" }};
+    let activeDates = {{ active_dates_json|safe|default:"[]" }};
+    let refundDates = {{ refund_dates_json|safe|default:"[]" }};
     const dailyDateInput = document.getElementById('dailyDateInput');
     let calCurrentDate = dailyDateInput && dailyDateInput.value ? new Date(dailyDateInput.value) : new Date();
     if (isNaN(calCurrentDate)) calCurrentDate = new Date();
@@ -1373,11 +1447,12 @@
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const isSelected = (year === selYear && month === selMonth && day === selDay);
             const isActive = activeDates.includes(dateStr);
+            const isRefund = refundDates.includes(dateStr);
 
             const dayBtn = document.createElement('button');
             dayBtn.type = 'button';
             
-            dayBtn.className = 'relative w-full py-1.5 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-inset mb-1';
+            dayBtn.className = 'relative w-full pt-2 pb-3.5 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-inset mb-1';
             
             const currentDayOfWeek = new Date(year, month, day).getDay();
             if (currentDayOfWeek === 0) dayBtn.classList.add('text-red-500');
@@ -1395,8 +1470,9 @@
             
             if (isActive) {
                 const dot = document.createElement('div');
-                dot.className = 'absolute bottom-0 w-1.5 h-1.5 rounded-full bg-emerald-500 left-1/2 transform -translate-x-1/2 translate-y-0.5';
-                if (isSelected) dot.classList.replace('bg-emerald-500', 'bg-white');
+                // ✅ 환불 날짜면 빨간 점, 아니면 초록 점 (선택되어도 색상 유지)
+                const dotColor = isRefund ? 'bg-rose-500' : 'bg-emerald-500';
+                dot.className = `absolute bottom-1 w-1.5 h-1.5 rounded-full ${dotColor} left-1/2 transform -translate-x-1/2`;
                 dayBtn.appendChild(dot);
             }
 
@@ -1418,6 +1494,19 @@
     document.getElementById('cal-next-btn')?.addEventListener('click', () => {
         calViewMonth++;
         if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+        renderCalendar(calViewYear, calViewMonth);
+    });
+
+    document.getElementById('cal-today-btn')?.addEventListener('click', () => {
+        const today = new Date();
+        calViewYear = today.getFullYear();
+        calViewMonth = today.getMonth();
+        
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        dailyDateInput.value = `${y}-${m}-${d}`;
+        
         renderCalendar(calViewYear, calViewMonth);
     });
 

@@ -499,7 +499,11 @@ def ajax_attendance_cancel(request, student_id):
         else:
             status_to_save = '취소(문자x)'
             
-        Attendance.objects.filter(student=student, date=target_date).update(status=status_to_save)
+        # ✅ 취소 시 사유도 함께 삭제하여 달력에 영향 주지 않게 함
+        Attendance.objects.filter(student=student, date=target_date).update(
+            status=status_to_save, 
+            absence_reason=None
+        )
             
         return JsonResponse({'status': 'canceled', 'student': student.name, 'send_sms': send_sms, 'sms_message': sms_message})
     return JsonResponse({'status': 'invalid'})
@@ -527,7 +531,7 @@ def ajax_attendance_check(request, student_id):
         program = data.get('program_name')
         absence_reason = (data.get('absence_reason') or '').strip()
         if status != '결석':
-            absence_reason = ''
+            absence_reason = None # ✅ 결석이 아니면 사유 삭제
 
         existing_attendance = Attendance.objects.filter(student=student, date=target_date).first()
         if existing_attendance and existing_attendance.status in ['출석', '결석', '종료처리']:
@@ -825,6 +829,7 @@ def attendance_list(request):
         "daily_present_attendances": daily_present_attendances,
         "daily_absent_attendances": daily_absent_attendances,
         "active_dates_json": json.dumps([d.isoformat() for d in Attendance.objects.filter(student__school=selected_school).values_list('date', flat=True).distinct()]) if selected_school else '[]',
+        "refund_dates_json": json.dumps([d.isoformat() for d in Attendance.objects.filter(student__school=selected_school, status__startswith='결석', absence_reason__in=['학교행사', '독감', '전염병']).values_list('date', flat=True).distinct()]) if selected_school else '[]',
         "user_settings": user_settings,
     })
 
@@ -875,6 +880,7 @@ def end_class(request):
         data = json.loads(request.body)
         department_name = data.get('department_name')
         school_id = data.get('school_id')
+        student_ids = data.get('student_ids')  # ✅ 선택된 학생 ID 리스트 추가
         
         # ✅ Get date from request body if available, else default to today
         date_str = data.get('date')
@@ -892,20 +898,39 @@ def end_class(request):
         school = get_object_or_404(School, id=school_id, user=request.user)
         user_settings, _ = Setting.objects.get_or_create(user=request.user)
 
-        attendances_to_end = Attendance.objects.filter(
-            student__school=school,
-            student__department=department_name,
-            date=target_date,
-            status='출석'
-        )
+        # ✅ 1. 선택된 학생이 있는 경우 (강제 종료 처리)
+        if student_ids:
+            for student_id in student_ids:
+                # get_or_create를 사용하여 기록이 없으면 생성, 있으면 가져옴
+                attendance, created = Attendance.objects.get_or_create(
+                    student_id=student_id,
+                    date=target_date,
+                    defaults={'status': '종료처리'}
+                )
+                if not created:
+                    attendance.status = '종료처리'
+                    attendance.save()
+            
+            # 종료 처리된 학생들의 전화번호 수집 (문자 발송용)
+            attendances_to_end = Attendance.objects.filter(student_id__in=student_ids, date=target_date)
+            student_count = attendances_to_end.count()
+            phone_numbers = [att.student.phone for att in attendances_to_end if att.student.phone]
+        
+        # ✅ 2. 전체 종료 (기존처럼 '출석' 상태인 학생들만 대상으로 함)
+        else:
+            attendances_to_end = Attendance.objects.filter(
+                student__school=school,
+                student__department=department_name,
+                date=target_date,
+                status='출석'
+            )
 
-        if not attendances_to_end.exists():
-            return JsonResponse({'status': 'info', 'message': '수업을 종료할 출석 상태의 학생이 없습니다.'})
+            if not attendances_to_end.exists():
+                return JsonResponse({'status': 'info', 'message': '수업을 종료할 출석 상태의 학생이 없습니다.'})
 
-        student_count = attendances_to_end.count()
-        phone_numbers = [att.student.phone for att in attendances_to_end if att.student.phone]
-
-        attendances_to_end.update(status='종료처리')
+            student_count = attendances_to_end.count()
+            phone_numbers = [att.student.phone for att in attendances_to_end if att.student.phone]
+            attendances_to_end.update(status='종료처리')
 
         sms_uri = None
         if user_settings.send_class_end_sms and user_settings.auto_send_class_end_sms and phone_numbers:

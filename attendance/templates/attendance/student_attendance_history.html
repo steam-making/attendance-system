@@ -3,43 +3,52 @@
 {% block title %}{{ student.name }} 출결 이력{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900">{{ student.name }} 학생 출결 이력</h1>
-            <p class="mt-1 text-sm text-slate-500">{{ student.department }} · {{ student.grade }}-{{ student.classroom }}-{{ student.number|stringformat:"02d" }}</p>
+<div class="max-w-5xl mx-auto py-6 sm:py-10 px-2 sm:px-6 lg:px-8 space-y-6">
+    <div class="flex items-center justify-between px-2">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 truncate">{{ student.name }} 학생 출결 이력</h1>
+            <p class="mt-1 text-xs sm:text-sm text-slate-500">{{ student.department }} · {{ student.grade }}-{{ student.classroom }}-{{ student.number|stringformat:"02d" }}</p>
         </div>
-        <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
-            목록으로
-        </a>
+        <div class="ml-4 flex-shrink-0">
+            <a href="{% url 'attendance_list' %}?school={{ selected_school.id }}" class="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+                <i class="ph-bold ph-list mr-1.5"></i>
+                목록으로
+            </a>
+        </div>
     </div>
 
     {% if monthly_history %}
         <div class="space-y-6">
             {% for month in monthly_history %}
-                <section class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="px-5 py-3 border-b border-slate-100 bg-slate-50">
-                        <h2 class="text-base font-semibold text-slate-800">{{ month.label }}</h2>
+                <section class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden mx-auto w-full">
+                    <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <h2 class="text-sm sm:text-base font-semibold text-slate-800">{{ month.label }}</h2>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-200">
-                            <thead class="bg-white">
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50/50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">날짜</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">출석 여부</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">결석 사유</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">날짜</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">출석 상태</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">사유</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody class="divide-y divide-slate-100 bg-white">
                                 {% for record in month.records %}
-                                    <tr>
-                                        <td class="px-4 py-3 text-sm text-slate-700">{{ record.date|date:"Y-m-d" }}</td>
-                                        <td class="px-4 py-3 text-sm">
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium {% if record.status == '출석' or record.status == '지각' or record.status == '종료처리' %}bg-emerald-50 text-emerald-700{% elif record.status == '결석' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-slate-700 whitespace-nowrap">
+                                            {{ record.date|date:"m월 d일" }} <span class="text-slate-400 text-[10px]">({{ record.date|date:"D" }})</span>
+                                        </td>
+                                        <td class="px-3 sm:px-6 py-3 text-xs sm:text-sm whitespace-nowrap">
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-medium {% if record.status == '출석' or record.status == '지각' or record.status == '종료처리' %}bg-emerald-50 text-emerald-700{% elif record.status == '결석' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
                                                 {{ record.status }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3 text-sm text-slate-600">{{ record.absence_reason|default:"-" }}</td>
+                                        <td class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-slate-600">
+                                            <div class="max-w-[120px] sm:max-w-none truncate sm:whitespace-normal">
+                                                {{ record.absence_reason|default:"-" }}
+                                            </div>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -49,7 +58,8 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center text-slate-500">
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-12 text-center text-slate-500 mx-2">
+            <i class="ph-bold ph-calendar-x text-4xl mb-3 block text-slate-300"></i>
             출결 이력이 없습니다.
         </div>
     {% endif %}
