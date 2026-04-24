@@ -603,7 +603,7 @@ def student_update(request, pk):
         form = StudentForm(request.POST, instance=student)
         if form.is_valid():
             form.save()
-            return redirect('attendance_list')  # 또는 적절한 페이지
+            return redirect(f"/attendance/list/?school={student.school.id}")
     else:
         form = StudentForm(instance=student)
 
@@ -714,13 +714,18 @@ def attendance_list(request):
     # ✅ GET 파라미터에서 선택된 학교 ID 가져오기
     selected_school_id = request.GET.get("school")
 
-    if selected_school_id:
-        selected_school = School.objects.filter(
-            id=selected_school_id,
-            user_id=user_id
-        ).first()
-    else:
-        selected_school = schools.first()
+    if not selected_school_id:
+        # ✅ 학교 파라미터가 없으면 학교 선택 페이지로 이동 (앱 시작 시 등)
+        return redirect('select_school')
+
+    selected_school = School.objects.filter(
+        id=selected_school_id,
+        user_id=user_id
+    ).first()
+
+    if not selected_school:
+        # ✅ 잘못된 ID 값이면 학교 선택 페이지로
+        return redirect('select_school')
 
     # 🔹 [보안] 비활성 학교 접근 차단
     if selected_school:

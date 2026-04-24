@@ -812,12 +812,6 @@
                             </div>
                         `;
                     } else {
-                        let smsBtn = '';
-                        if (data.send_sms && data.sms_message) {
-                            const finalSmsUrl = `sms:${phone}?body=${encodeURIComponent(data.sms_message)}`;
-                            smsBtn = `<a href="${finalSmsUrl}" class="inline-flex items-center p-1.5 border border-primary-200 rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-colors" title="문자"><i class="ph-bold ph-chat-circle-text"></i><span class="btn-text ml-1 text-xs">문자</span></a>`;
-                        }
-
                         let endBtn = '';
                         if (!finalStatus.includes('결석')) {
                             endBtn = `<button onclick="endAttendance(${studentId}, '${rowId}', '${name}', '${phone}')" class="inline-flex items-center p-1.5 border border-slate-200 rounded-md text-slate-600 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 transition-colors" title="종료"><i class="ph-bold ph-stop"></i><span class="btn-text ml-1 text-xs">종료</span></button>`;
@@ -827,7 +821,6 @@
                             <div class="flex justify-center items-center gap-1">
                               <button onclick="cancelAttendance(${studentId}, '${rowId}')" class="inline-flex items-center p-1.5 border border-red-200 rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors" title="취소"><i class="ph-bold ph-x"></i><span class="btn-text ml-1 text-xs">취소</span></button>
                               ${endBtn}
-                              ${smsBtn}
                             </div>
                         `;
                     }
