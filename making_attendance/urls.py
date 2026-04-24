@@ -30,4 +30,5 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),  # 로그인/로그아웃 URL 추가
     path('accounts/', include('allauth.urls')),  # ✅ 소셜 로그인 등 추가 기능 연결
     path('attendance/', include('attendance.urls')),  # ✅ 출결 체크 연결
+    path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),  # ✅ 개인정보처리방침
 ]  
