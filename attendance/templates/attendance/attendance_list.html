@@ -1119,9 +1119,18 @@
                 classSessionActive = targetActive;
                 setClassButtonActive(classSessionActive);
                 
-                // ✅ Android 앱에 학교 정보 다시 전달 (수업 시작 시점 동기화 강화)
-                if (window.Android && window.Android.onSchoolSelected) {
-                    window.Android.onSchoolSelected(parseInt(selectedSchoolId, 10));
+                // ✅ Android 앱 동기화 (시작 시 ID 전달, 중단 시 stopMonitoring 호출)
+                if (window.Android) {
+                    if (classSessionActive) {
+                        if (window.Android.onSchoolSelected) {
+                            window.Android.onSchoolSelected(parseInt(selectedSchoolId, 10));
+                        }
+                    } else {
+                        if (window.Android.stopMonitoring) {
+                            console.log("📱 Android 앱 모니터링 중단 신호 전달");
+                            window.Android.stopMonitoring();
+                        }
+                    }
                 }
                 return;
             }
