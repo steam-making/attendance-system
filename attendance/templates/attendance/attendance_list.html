@@ -965,6 +965,12 @@
         ? '{{ csrf_token }}'
         : getCookie('csrftoken');
     const selectedSchoolId = {{ selected_school.id|default:"null" }};
+    
+    // ✅ Android 앱 인터페이스 연결 (페이지 로드 시 현재 학교 정보 전달)
+    if (selectedSchoolId && window.Android && window.Android.onSchoolSelected) {
+        console.log("📱 Android 앱에 학교 정보 전달 (Page Load):", selectedSchoolId);
+        window.Android.onSchoolSelected(parseInt(selectedSchoolId, 10));
+    }
     let classSessionActive = {{ class_session_active|yesno:"true,false" }};
     let classSessionRequestInFlight = false;
     let classActionConfirmHandler = null;
@@ -1112,6 +1118,11 @@
             if (data.status === 'success') {
                 classSessionActive = targetActive;
                 setClassButtonActive(classSessionActive);
+                
+                // ✅ Android 앱에 학교 정보 다시 전달 (수업 시작 시점 동기화 강화)
+                if (window.Android && window.Android.onSchoolSelected) {
+                    window.Android.onSchoolSelected(parseInt(selectedSchoolId, 10));
+                }
                 return;
             }
             setClassButtonActive(classSessionActive);

@@ -45,7 +45,9 @@
                     {% if school.is_active %}
                     <!-- ✅ 활성 학교: 정상 버튼 -->
                     <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50">
-                        <a href="{% url 'attendance_list' %}?school={{ school.id }}" class="flex-1 inline-flex justify-center items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors">
+                        <a href="{% url 'attendance_list' %}?school={{ school.id }}" 
+                           onclick="if(window.Android && window.Android.onSchoolSelected) { window.Android.onSchoolSelected({{ school.id }}); }"
+                           class="flex-1 inline-flex justify-center items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors">
                             <i class="ph-bold ph-check-circle"></i>
                             출석체크
                         </a>
