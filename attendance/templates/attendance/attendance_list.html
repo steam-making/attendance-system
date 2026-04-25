@@ -70,6 +70,8 @@
     list-style: none;
   }
 </style>
+<!-- ✅ Google AdMob Script (실제 광고 활성화) -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-{{ ADMOB_PUBLISHER_ID|default:'YOUR_PUB_ID' }}" crossorigin="anonymous"></script>
 {% endblock %}
 
 {% block content %}
@@ -427,6 +429,25 @@
 </div>
 
 <!-- Tailwind Modal -->
+<!-- 광고 배너 영역 (Free 유저 전용) -->
+{% if not user.is_pro %}
+<div class="max-w-5xl mx-auto mt-4 px-4 sm:px-0">
+    <div class="bg-white rounded-lg border border-slate-100 p-1 text-center overflow-hidden shadow-sm">
+        <p class="text-[9px] text-slate-300 mb-1">ADVERTISEMENT</p>
+        <!-- 📺 실제 AdMob 배너 광고 태그 -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-{{ ADMOB_PUBLISHER_ID|default:'YOUR_PUB_ID' }}"
+             data-ad-slot="{{ ADMOB_BANNER_UNIT_ID|default:'YOUR_UNIT_ID' }}"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+</div>
+{% endif %}
+
 <div id="addStudentModal" class="relative z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-sm"></div>
 
@@ -1514,6 +1535,127 @@
                 renderCalendar(calViewYear, calViewMonth);
             }
         };
+    }
+</script>
+
+<!-- 👑 Pricing / Pro Subscription Modal -->
+<div id="pricingModal" class="relative z-50 hidden" aria-labelledby="modal-title-pricing" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-md"></div>
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                <div class="absolute right-4 top-4">
+                    <button onclick="toggleModal('pricingModal')" class="text-slate-400 hover:text-slate-600">
+                        <i class="ph-bold ph-x text-xl"></i>
+                    </button>
+                </div>
+                <div class="bg-white px-6 pb-8 pt-10">
+                    <div class="text-center">
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 mb-4">
+                            <i class="ph-fill ph-crown text-violet-600 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight" id="modal-title-pricing">출첵마스터 Pro 라이선스</h3>
+                        <p class="mt-2 text-slate-500 text-sm">더 강력한 기능으로 효율을 높여보세요!</p>
+                    </div>
+                    
+                    <div class="mt-8 space-y-4">
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <i class="ph-bold ph-check-circle text-violet-600 text-xl"></i>
+                            <span class="text-slate-700 font-bold">학교 생성 제한 해제 (최대 5개)</span>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <i class="ph-bold ph-megaphone-simple text-violet-600 text-xl"></i>
+                            <span class="text-slate-700 font-bold">모든 광고 제거 (광고 없는 쾌적함)</span>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <i class="ph-bold ph-magic-wand text-violet-600 text-xl"></i>
+                            <span class="text-slate-700 font-bold">자동화 기능 완벽 제공</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-10">
+                        <div class="text-center mb-6">
+                            <div class="inline-flex items-end gap-1">
+                                <span class="text-4xl font-black text-slate-900 italic">4,900</span>
+                                <span class="text-lg font-bold text-slate-500 pb-1">원 / 30일</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="requestPaymentV2(30, 4900)" class="w-full py-4 px-6 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black text-lg shadow-lg shadow-violet-200 transition-all active:scale-95">
+                            Pro 등급 업그레이드 시작
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-6 py-4 text-center">
+                    <p class="text-[10px] text-slate-400 font-medium whitespace-pre-wrap">안전한 결제를 위해 포트원 서비스를 이용합니다.\n구독 해지는 프로필 설정 메뉴에서 언제든지 가능합니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PortOne SDK (V1) -->
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+
+<script>
+    // ✅ 결제 요청 함수 (테스트 모드 지원)
+    function requestPaymentV2(days, amount) {
+        if (!confirm(`${days}일 동안 Pro 기능을 구독하시겠습니까?`)) return;
+
+        const IMP = window.IMP;
+        // ✅ 실제 사용자님의 상점 ID를 사용 (환경 변수에서 가져옴)
+        const shopId = "{{ PORTONE_MERCHANT_ID|default:'imp10391932' }}"; 
+        IMP.init(shopId);
+
+        const merchant_uid = "PRO-" + Date.now();
+        const buyer_email = "{{ user.email }}";
+        const buyer_name = "{{ user.username }}";
+
+        // ✅ 정기 구독 빌링키 발급 요청 (고유 키 생성)
+        const customer_uid = "USER-" + "{{ user.id }}" + "-" + Date.now();
+
+        IMP.request_pay({
+            pg: "kakaopay.tms_sub", // 카카오페이 정기결제 테스트용
+            pay_method: "card",
+            merchant_uid: merchant_uid,
+            customer_uid: customer_uid,
+            name: `출첵마스터 Pro ${days}일 구독`,
+            amount: amount,
+            buyer_email: buyer_email,
+            buyer_name: buyer_name
+        }, function (rsp) {
+            if (rsp.success) {
+                // 서버 검증 요청
+                fetch("{% url 'payment_verify' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        imp_uid: rsp.imp_uid,
+                        merchant_uid: rsp.merchant_uid,
+                        amount: amount,
+                        days: days,
+                        customer_uid: customer_uid
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert("결제 검증 실패: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error("Payment Verify Error:", err);
+                    alert("서버 통신 중 오류가 발생했습니다.");
+                });
+            } else {
+                alert("결제 실패: " + rsp.error_msg);
+            }
+        });
     }
 </script>
 {% endblock %}

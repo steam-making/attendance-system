@@ -47,6 +47,7 @@ def update_today_attendance_status(request, student_id):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid method'}, status=405)
 
+@csrf_exempt
 @login_required
 def mark_attendance_end(request, student_id):
     if request.method == 'POST':
@@ -171,6 +172,7 @@ def _parse_time(value):
     return None
 
 
+@csrf_exempt
 @login_required
 @require_POST
 def start_class_session(request):
@@ -210,6 +212,7 @@ def start_class_session(request):
     })
 
 
+@csrf_exempt
 @login_required
 @require_POST
 def stop_class_session(request):
@@ -233,6 +236,7 @@ def stop_class_session(request):
     })
 
 
+@csrf_exempt
 @login_required
 @require_POST
 def auto_process_attendance(request):
@@ -511,6 +515,7 @@ def ajax_attendance_cancel(request, student_id):
 
 from django.views.decorators.csrf import csrf_exempt
 
+@csrf_exempt
 @login_required
 def ajax_attendance_check(request, student_id):
     student = get_object_or_404(Student, id=student_id, school__user=request.user)
