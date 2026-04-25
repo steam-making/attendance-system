@@ -1613,6 +1613,39 @@
     </div>
 </div>
 
+
+<!-- ✅ 퇴장 확인 모달 (수업 종료 여부 확인) -->
+<div id="exitConfirmModal" class="relative z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="ph-bold ph-question text-indigo-600 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-lg font-bold leading-6 text-slate-900" id="modal-title">수업을 종료할까요?</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-slate-500">페이지를 벗어나기 전에 수업을 종료하시겠습니까?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-4 py-4 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                    <button type="button" onclick="handleExitChoice(true)" class="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 sm:w-auto transition-all">
+                        <i class="ph-bold ph-stop-circle mr-1.5 mt-0.5"></i> 예 (종료 후 이동)
+                    </button>
+                    <button type="button" onclick="handleExitChoice(false)" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-all">
+                        아니요 (이동만 함)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- PortOne SDK (V1) -->
 <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
 
@@ -1676,6 +1709,57 @@
                 alert("결제 실패: " + rsp.error_msg);
             }
         });
+    }
+
+    let pendingExitUrl = null;
+
+    // ✅ 퇴장 가로채기 로직
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        // 내부 동작(자바스크립트, 앵커, 새창)은 제외
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank' || link.closest('.no-intercept')) return;
+
+        if (classSessionActive) {
+            e.preventDefault();
+            pendingExitUrl = link.href;
+            document.getElementById('exitConfirmModal').classList.remove('hidden');
+        }
+    });
+
+    // ✅ 퇴장 선택 처리
+    async function handleExitChoice(shouldStop) {
+        if (shouldStop) {
+            // '예'를 누른 경우: 수업 종료 처리 시도
+            try {
+                // 1. Android 중단 신호
+                if (window.Android && window.Android.stopMonitoring) {
+                    window.Android.stopMonitoring();
+                }
+                
+                // 2. 서버 세션 종료 (AJAX)
+                await fetch('{% url "stop_class_session" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ school_id: selectedSchoolId })
+                });
+                
+                // 웹 UI 상태도 변경 (필요 시)
+                classSessionActive = false;
+                if (typeof setClassButtonActive === 'function') setClassButtonActive(false);
+            } catch (err) {
+                console.error("수업 종료 처리 중 오류:", err);
+            }
+        }
+        
+        // 최종적으로 페이지 이동
+        window.location.href = pendingExitUrl;
     }
 </script>
 {% endblock %}
