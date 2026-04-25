@@ -126,10 +126,11 @@ def students_today(request):
             "phone": getattr(s, "phone", ""),
             "department": getattr(s, "department", None),
             "grade": getattr(s, "grade", None),
-            "class_no": getattr(s, "class_no", None), #classroom일 수 있음
+            "class_no": getattr(s, "classroom", getattr(s, "class_no", None)),
             "number": getattr(s, "number", None),
             "today_status": getattr(a, "status", "none") if a else "none",
             "attendance_id": a.id if a else None,
+            "updated_at": timezone.localtime(a.created_at).isoformat() if a else None,
         })
 
     return Response({"ok": True, "data": {"date": str(today), "items": items}}, status=status.HTTP_200_OK)
