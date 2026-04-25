@@ -1655,19 +1655,16 @@
         if (!confirm(`${days}일 동안 Pro 기능을 구독하시겠습니까?`)) return;
 
         const IMP = window.IMP;
-        // ✅ 실제 사용자님의 상점 ID를 사용 (환경 변수에서 가져옴)
         const shopId = "{{ PORTONE_MERCHANT_ID|default:'imp10391932' }}"; 
         IMP.init(shopId);
 
         const merchant_uid = "PRO-" + Date.now();
         const buyer_email = "{{ user.email }}";
         const buyer_name = "{{ user.username }}";
-
-        // ✅ 정기 구독 빌링키 발급 요청 (고유 키 생성)
         const customer_uid = "USER-" + "{{ user.id }}" + "-" + Date.now();
 
         IMP.request_pay({
-            pg: "kakaopay.tms_sub", // 카카오페이 정기결제 테스트용
+            pg: "kakaopay.tms_sub", 
             pay_method: "card",
             merchant_uid: merchant_uid,
             customer_uid: customer_uid,
@@ -1677,7 +1674,6 @@
             buyer_name: buyer_name
         }, function (rsp) {
             if (rsp.success) {
-                // 서버 검증 요청
                 fetch("{% url 'payment_verify' %}", {
                     method: "POST",
                     headers: {
@@ -1700,10 +1696,6 @@
                     } else {
                         alert("결제 검증 실패: " + data.message);
                     }
-                })
-                .catch(err => {
-                    console.error("Payment Verify Error:", err);
-                    alert("서버 통신 중 오류가 발생했습니다.");
                 });
             } else {
                 alert("결제 실패: " + rsp.error_msg);
@@ -1713,12 +1705,41 @@
 
     let pendingExitUrl = null;
 
-    // ✅ 퇴장 가로채기 로직
+    // ✅ 뒤로가기 방지용 가짜 히스토리 추가 함수
+    function pushDummyState() {
+        if (window.history.state !== 'preventExit') {
+            window.history.pushState('preventExit', null, window.location.href);
+        }
+    }
+
+    // ✅ 웹 브라우저 새로고침/탭 닫기 방지 (표준 브라우저 경고창)
+    window.addEventListener('beforeunload', function (e) {
+        if (classSessionActive) {
+            e.preventDefault();
+            e.returnValue = ''; // 크롬 등 최신 브라우저 필수 설정
+        }
+    });
+
+    // ✅ 수업 시작 시 혹은 페이지 로드 시 즉시 히스토리 점유
+    if (classSessionActive) {
+        pushDummyState();
+    }
+
+    // ✅ 뒤로가기 가로채기 (popstate - PC/모바일 공용)
+    window.addEventListener('popstate', function(e) {
+        if (classSessionActive) {
+            document.getElementById('exitConfirmModal').classList.remove('hidden');
+            // 뒤로가기 시 가려던 주소를 알 수 없으므로 이전 페이지나 학교 선택 페이지로 설정
+            pendingExitUrl = document.referrer || '{% url "select_school" %}';
+            pushDummyState();
+        }
+    });
+
+    // ✅ 클릭 가로채기 로직 (기기 상관없이 모든 A 태그 보호)
     document.addEventListener('click', function(e) {
         const link = e.target.closest('a');
         if (!link) return;
         
-        // 내부 동작(자바스크립트, 앵커, 새창)은 제외
         const href = link.getAttribute('href');
         if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank' || link.closest('.no-intercept')) return;
 
@@ -1726,20 +1747,18 @@
             e.preventDefault();
             pendingExitUrl = link.href;
             document.getElementById('exitConfirmModal').classList.remove('hidden');
+            pushDummyState();
         }
     });
 
     // ✅ 퇴장 선택 처리
     async function handleExitChoice(shouldStop) {
         if (shouldStop) {
-            // '예'를 누른 경우: 수업 종료 처리 시도
             try {
-                // 1. Android 중단 신호
                 if (window.Android && window.Android.stopMonitoring) {
                     window.Android.stopMonitoring();
                 }
                 
-                // 2. 서버 세션 종료 (AJAX)
                 await fetch('{% url "stop_class_session" %}', {
                     method: 'POST',
                     headers: {
@@ -1750,7 +1769,6 @@
                     body: JSON.stringify({ school_id: selectedSchoolId })
                 });
                 
-                // 웹 UI 상태도 변경 (필요 시)
                 classSessionActive = false;
                 if (typeof setClassButtonActive === 'function') setClassButtonActive(false);
             } catch (err) {
@@ -1758,8 +1776,10 @@
             }
         }
         
-        // 최종적으로 페이지 이동
-        window.location.href = pendingExitUrl;
+        // 이동할 때는 감시 로직을 완전히 종료
+        classSessionActive = false;
+        // 히스토리 상태를 초기화하거나 무시하고 진행
+        window.location.href = pendingExitUrl || '{% url "select_school" %}';
     }
 </script>
 {% endblock %}
